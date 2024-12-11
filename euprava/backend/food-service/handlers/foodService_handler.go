@@ -67,7 +67,7 @@ func (h *FoodServiceHandler) CreateFoodHandler(rw http.ResponseWriter, r *http.R
 	response := map[string]interface{}{
 		"message":  "Food entry created successfully",
 		"foodName": foodData.FoodName,
-		"status":   foodData.Stanje,
+		"status":   foodData.Stanje2,
 	}
 
 	// Pošalji JSON odgovor nazad klijentu
@@ -94,6 +94,41 @@ func (r *FoodServiceHandler) EditFoodForStudent(rw http.ResponseWriter, h *http.
 
 	// Respond with success status
 	rw.WriteHeader(http.StatusOK)
+}
+
+// GetAllFoodHandler odgovara na GET zahtev i vraća sve unose hrane.
+/*func (h *FoodServiceHandler) GetAllFoodHandler(rw http.ResponseWriter, r *http.Request) {
+	foods, err := h.foodServiceRepo.GetAllFood() // Poziv metode u repozitorijumu
+	if err != nil {
+		h.logger.Println("Error fetching food list:", err)
+		http.Error(rw, "Unable to fetch food list", http.StatusInternalServerError)
+		return
+	}
+
+	// Loguj podatke koji dolaze iz baze
+	h.logger.Printf("Fetched foods: %+v", foods)
+
+	rw.WriteHeader(http.StatusOK)
+	err = foods.ToJSON(rw) // Poziv ToJSON metode za tip Foods
+	if err != nil {
+		h.logger.Println("Error encoding food list:", err)
+		http.Error(rw, "Error encoding response", http.StatusInternalServerError)
+		return
+	}
+}*/
+// GetAllFood returns all food items and sends them as a JSON response.
+func (h *FoodServiceHandler) GetAllFood(rw http.ResponseWriter, r *http.Request) {
+	foods, err := h.foodServiceRepo.GetAllFood()
+	if err != nil {
+		http.Error(rw, "Error retrieving food items", http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(rw).Encode(foods)
+	if err != nil {
+		http.Error(rw, "Error encoding food items to JSON", http.StatusInternalServerError)
+		return
+	}
 }
 
 // getAllFood
@@ -164,6 +199,107 @@ func (h *FoodServiceHandler) SaveTherapy(rw http.ResponseWriter, r *http.Request
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
+}
+/*func (h *FoodServiceHandler) EditFood(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	h.logger.Printf("Received request to edit Food with ID: %s", id)
+
+	food, ok := r.Context().Value(KeyFood{}).(*data.Food)
+	if !ok {
+		h.logger.Println("Failed to retrieve Food data from context")
+		http.Error(rw, "Invalid Food data", http.StatusBadRequest)
+		return
+	}
+
+	h.logger.Printf("Food data retrieved: %+v", food)
+
+	if food.FoodName == "" {
+		h.logger.Println("FoodName is empty in the request")
+		http.Error(rw, "FoodName cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	err := h.foodServiceRepo.EditFood(id, food)
+	if err != nil {
+		h.logger.Printf("Error updating Food with ID %s: %v", id, err)
+		http.Error(rw, "Error updating food", http.StatusInternalServerError)
+		return
+	}
+
+	h.logger.Printf("Successfully updated Food with ID: %s", id)
+	rw.WriteHeader(http.StatusOK)
+}/*
+
+
+// UpdateTherapyData ažurira podatke o terapiji u bazi podataka.
+
+
+
+// EditFood ažurira samo FoodName za hranu u bazi podataka.
+/*func (r *FoodServiceHandler) EditFood(rw http.ResponseWriter, h *http.Request) {
+	vars := mux.Vars(h)
+	id := vars["id"]
+
+	food := h.Context().Value(KeyProduct{}).(*data.Food)
+
+	if food.FoodName == "" {
+		http.Error(rw, "FoodName cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	err := r.foodServiceRepo.EditFood(id, food)
+	if err != nil {
+		http.Error(rw, "Error updating food", http.StatusInternalServerError)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}*/
+
+func (r *FoodServiceHandler) EditFood(rw http.ResponseWriter, h *http.Request) {
+	vars := mux.Vars(h)
+	id := vars["id"]
+
+	food := h.Context().Value(KeyProduct{}).(*data.Food)
+
+	err := r.foodServiceRepo.EditFood(id, food)
+	if err != nil {
+		http.Error(rw, "Error updating appointment", http.StatusInternalServerError)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *FoodServiceHandler) DeleteFoodHandler(rw http.ResponseWriter, r *http.Request) {
+	// Dobavljanje ID-a iz URL-a
+	vars := mux.Vars(r)
+	foodID := vars["id"]
+
+	// Provera da li ID postoji u URL-u
+	if foodID == "" {
+		http.Error(rw, "Missing food ID in request", http.StatusBadRequest)
+		return
+	}
+
+	// Konvertovanje string ID-a u ObjectID
+	objectID, err := primitive.ObjectIDFromHex(foodID)
+	if err != nil {
+		http.Error(rw, "Invalid food ID format", http.StatusBadRequest)
+		return
+	}
+
+	// Pozivanje funkcije koja briše hranu iz baze (preko objectID)
+	err = h.foodServiceRepo.DeleteFoodEntry(objectID)
+	if err != nil {
+		http.Error(rw, "Error deleting food", http.StatusInternalServerError)
+		return
+	}
+
+	// Ako je uspešno obrisano
+	rw.WriteHeader(http.StatusNoContent) // 204 No Content
 }
 
 func (h *FoodServiceHandler) ClearTherapiesList(rw http.ResponseWriter, r *http.Request) {
@@ -261,6 +397,28 @@ func (h *FoodServiceHandler) MiddlewareFoodDeserialization(next http.Handler) ht
 		// Pokušaj deserializacije JSON podataka iz tela zahteva
 		err := json.NewDecoder(r.Body).Decode(foodData)
 		if err != nil {
+			h.logger.Println("Unable to decode JSON:", err)
+			http.Error(rw, "Unable to decode JSON", http.StatusBadRequest)
+			return
+		}
+
+		// Postavi deserializovane podatke u kontekst
+		ctx := context.WithValue(r.Context(), KeyFood{}, foodData)
+		r = r.WithContext(ctx)
+
+		// Nastavi sa sledećim handlerom
+		next.ServeHTTP(rw, r)
+	})
+}
+
+// MiddlewareFoodDeserialization je middleware funkcija koja preuzima podatke o hrani iz zahteva i stavlja ih u kontekst
+/*func (h *FoodServiceHandler) MiddlewareFoodDeserialization(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		foodData := &data.Food{}
+
+		// Pokušaj deserializacije JSON podataka iz tela zahteva
+		err := json.NewDecoder(r.Body).Decode(foodData)
+		if err != nil {
 			http.Error(rw, "Unable to decode JSON", http.StatusBadRequest)
 			h.logger.Fatal(err)
 			return
@@ -274,3 +432,4 @@ func (h *FoodServiceHandler) MiddlewareFoodDeserialization(next http.Handler) ht
 		next.ServeHTTP(rw, r)
 	})
 }
+*/

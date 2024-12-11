@@ -161,10 +161,14 @@ func (rr *FoodServiceRepo) CreateFoodEntry(r *http.Request, foodData *Food) erro
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Postavi dummy userID jer trenutno ne koristiš ulogovanog korisnika
-	dummyUserID := primitive.NilObjectID
-	foodData.UserID = dummyUserID
-	foodData.Stanje = Neporucena
+	// Automatski postavljanje dummy userID (možeš ovo kasnije zameniti sa stvarnim korisničkim ID-om)
+	dummyUserID := primitive.NewObjectID() // Generiše novi ObjectID
+	foodData.UserID = dummyUserID          // Postavi generisani ObjectID
+
+	// Postavi default stanje2 ako nije prosleđeno u telu zahteva
+	if foodData.Stanje2 == "" {
+		foodData.Stanje2 = Neprihvacena // Postavi default vrednost
+	}
 
 	// Loguj podatke pre umetanja
 	fmt.Printf("Inserting food data: %+v\n", foodData)
@@ -178,6 +182,8 @@ func (rr *FoodServiceRepo) CreateFoodEntry(r *http.Request, foodData *Food) erro
 		return err
 	}
 
+	// Vraćanje odgovora sa podacima
+	// Pretpostavljamo da vraćaš samo foodData u odgovoru ili ga možeš modifikovati kako bi uključio userId
 	return nil
 }
 
@@ -208,6 +214,147 @@ func (rr *FoodServiceRepo) GetListFood() ([]Food, error) {
 	return foodList, nil
 }
 
+// GetAllFood vraća sve unose hrane iz baze podataka.
+/*func (rr *FoodServiceRepo) GetAllFood() (*Foods, error) {
+    ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+    defer cancel()
+
+    foodCollection := rr.getCollection("food")
+
+    var foods Foods
+    cursor, err := foodCollection.Find(ctx, bson.M{})
+    if err != nil {
+        rr.logger.Println("Error fetching foods:", err)
+        return nil, err
+    }
+    defer cursor.Close(ctx)
+
+    if err = cursor.All(ctx, &foods); err != nil {
+        rr.logger.Println("Error decoding foods:", err)
+        return nil, err
+    }
+
+    // Dodaj log da vidiš koliko podataka je vraćeno
+    rr.logger.Printf("Fetched %d foods from database", len(foods))
+
+    return &foods, nil
+}*/
+
+// GetAllFood returns all food records from the 'food' collection.
+func (rr *FoodServiceRepo) GetAllFood() (*Foods, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Access the 'food' collection.
+	foodCollection := rr.getCollection("food")
+
+	// Query to fetch all food items.
+	cursor, err := foodCollection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	// Declare a variable to store the results.
+	var foods Foods
+	if err = cursor.All(ctx, &foods); err != nil {
+		rr.logger.Println(err)
+		return nil, err
+	}
+
+	// Return the food items.
+	return &foods, nil
+}
+
+/*func (rr *FoodServiceRepo) EditFood(id string, food *Food) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+	defer cancel()
+
+	foodsCollection := rr.getCollection("foods")
+
+	rr.logger.Printf("Starting update for Food ID: %s", id)
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		rr.logger.Println("Error converting ID to ObjectID:", err)
+		return fmt.Errorf("Invalid ID format: %w", err)
+	}
+
+	rr.logger.Printf("Converted ID to ObjectID: %v", objectID)
+
+	if food.FoodName == "" {
+		rr.logger.Println("FoodName is empty, cannot proceed with update")
+		return fmt.Errorf("FoodName cannot be empty")
+	}
+
+	filter := bson.M{"_id": objectID}
+	update := bson.M{
+		"$set": bson.M{"foodName": food.FoodName},
+	}
+
+	rr.logger.Printf("Filter: %v, Update: %v", filter, update)
+
+	result, err := foodsCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		rr.logger.Println("Error during update:", err)
+		return err
+	}
+
+	rr.logger.Printf("Documents matched: %v", result.MatchedCount)
+	rr.logger.Printf("Documents updated: %v", result.ModifiedCount)
+
+	if result.MatchedCount == 0 {
+		rr.logger.Println("No documents matched the given ID.")
+		return fmt.Errorf("No documents found with the provided ID")
+	}
+
+	return nil
+}
+*/
+// edit
+
+func (rr *FoodServiceRepo) EditFood(id string, food *Food) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+	defer cancel()
+
+	foodCollection := rr.getCollection("foods")
+
+	http.DefaultClient.Timeout = 60 * time.Second
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		rr.logger.Println("Error converting ID to ObjectID:", err)
+		rr.logger.Println("Invalid ID:", id)
+		return err
+	}
+
+	// Ažurirajte podatke u appointmentsCollection
+	filter := bson.M{"_id": objectID}
+	update := bson.M{}
+
+	if food.FoodName != "" {
+		update["foodName"] = food.FoodName
+	}
+
+	if food.Stanje2 != "" {
+		update["stanje2"] = food.Stanje2
+	}
+
+	updateQuery := bson.M{"$set": update}
+
+	result, err := foodCollection.UpdateOne(ctx, filter, updateQuery)
+
+	rr.logger.Printf("Documents matched: %v\n", result.MatchedCount)
+	rr.logger.Printf("Documents updated: %v\n", result.ModifiedCount)
+
+	if err != nil {
+		rr.logger.Println(err)
+		return err
+	}
+
+	return nil
+}
+
 // editFood
 func (rr *FoodServiceRepo) EditFoodForStudent(studentID string, newFood string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
@@ -224,6 +371,24 @@ func (rr *FoodServiceRepo) EditFoodForStudent(studentID string, newFood string) 
 		return err
 	}
 	rr.logger.Printf("Food updated successfully for student with ID: %s\n", studentID)
+	return nil
+}
+
+// DeleteFoodEntry briše podatak o hrani iz baze podataka na osnovu ID-a.
+func (rr *FoodServiceRepo) DeleteFoodEntry(foodID primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+	defer cancel()
+
+	foodCollection := rr.getCollection("food")
+	filter := bson.M{"_id": foodID}
+
+	_, err := foodCollection.DeleteOne(ctx, filter)
+	if err != nil {
+		rr.logger.Println("Error deleting food entry:", err)
+		return err
+	}
+
+	rr.logger.Printf("Successfully deleted food entry with ID: %s\n", foodID.Hex())
 	return nil
 }
 

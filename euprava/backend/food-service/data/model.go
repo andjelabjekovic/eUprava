@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"time"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -40,13 +41,14 @@ type Food struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	UserID   primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
 	FoodName string             `bson:"foodName,omitempty" json:"foodName,omitempty"`
-	Stanje   Stanje             `bson:"status,omitempty" json:"status,omitempty"`
+	Stanje2  Stanje2            `bson:"stanje2,omitempty" json:"stanje2,omitempty"`
 }
-type Stanje string
+
+type Stanje2 string
 
 const (
-	Porucena   = "Porucena"
-	Neporucena = "Neporucena"
+	Prihvacena   = "Prihvacena"
+	Neprihvacena = "Neprihvacena"
 )
 
 type Foods []*Food
@@ -57,6 +59,18 @@ func (o *Food) ToJSON(w io.Writer) error {
 }
 
 func (o *Food) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(o)
+}
+
+// ToJSON konvertuje listu hrane (Foods) u JSON format
+func (o *Foods) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(o)
+}
+
+// FromJSON učitava listu hrane (Foods) iz JSON formata
+func (o *Foods) FromJSON(r io.Reader) error {
 	d := json.NewDecoder(r)
 	return d.Decode(o)
 }
@@ -94,6 +108,42 @@ type TherapyData struct {
 	Status    Status             `bson:"status,omitempty" json:"status,omitempty"`
 	//Medications  []Medication       `bson:"medications,omitempty" json:"medications,omitempty"`
 	//Instructions string             `bson:"instructions,omitempty" json:"instructions,omitempty"`
+}
+type Order struct {
+	ID      primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Food    Food               `bson:"food,omitempty" json:"food,omitempty"`
+	UserID  primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
+	StatusO StatusO            `bson:"statusO,omitempty" json:"statusO,omitempty"`
+}
+
+type StatusO string
+
+const (
+	Pending   StatusO = "Pending"
+	Completed StatusO = "Completed"
+	Cancelled StatusO = "Cancelled"
+)
+
+type Orders []*Order
+
+func (o *Order) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(o)
+}
+
+func (o *Order) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(o)
+}
+
+func (o *Orders) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(o)
+}
+
+func (o *Orders) FromJSON(r io.Reader) error {
+	d := json.NewDecoder(r)
+	return d.Decode(o)
 }
 
 type Status string
