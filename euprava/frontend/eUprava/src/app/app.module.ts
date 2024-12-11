@@ -27,6 +27,7 @@ import { HomeRadnikComponent } from './components/foodservicefront/home-radnik/h
 
 
 import { HomepageComponent } from './homepage/homepage.component';
+import { FoodListComponent } from './components/foodservicefront/food-list/food-list.component';
 
 
 @NgModule({
@@ -50,6 +51,7 @@ import { HomepageComponent } from './homepage/homepage.component';
 
 
     HomepageComponent,
+    FoodListComponent,
 
   ],
   imports: [

@@ -13,6 +13,11 @@ export class HomeRadnikComponent {
     view() {
       this.router.navigate(['/therapy-list']);
     }
+
+    viewMenu() {
+      this.router.navigate(['/food-list']);
+    }
+  
   
    
   

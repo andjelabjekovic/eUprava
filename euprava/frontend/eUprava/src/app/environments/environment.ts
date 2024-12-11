@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  baseApiUrl: "http://localhost:8000/api"
+  baseApiUrl: "http://localhost:8000/api"//8000
 };
 
 /*
@@ -13,5 +13,10 @@ export const environment = {
  *
  * This import should be commented out in production mode because it will have a negative impact
  * on performance if an error is thrown.
+ * export const environment = {
+  production: false,
+  baseApiUrl: 'http://localhost:8003/api' // Ispravite URL prema vašem backend-u
+};
+
  */
 // import 'zone.js/plugins/zone-error';  // Included with Angular CLI.

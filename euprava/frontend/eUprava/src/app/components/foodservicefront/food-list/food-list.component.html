@@ -1,0 +1,25 @@
+<div *ngIf="foods.length === 0">
+  Nema dostupnih stavki hrane.
+</div>
+
+<table *ngIf="foods.length > 0" class="table">
+  <thead>
+    <tr>
+      <th>Naziv</th>
+      <th>Status</th> <!-- Dodao sam Status, ako je relevantan -->
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let food of foods">
+      <td>{{ food.foodName }}</td> <!-- Prikazuje foodName umesto name -->
+      <td>{{ food.stanje2 }}</td>  <!-- Ako želite prikazati stanje2 -->
+      <td>
+        <button (click)="deleteFood(food.id)">Delete</button> <!-- Dugme za Delete -->
+      </td>
+      <td>
+        <button >Update</button> 
+      </td>
+    </tr>
+  </tbody>
+ 
+</table>

@@ -17,8 +17,11 @@ import { HomeRadnikComponent } from './components/foodservicefront/home-radnik/h
 import { CreateFoodComponent } from './components/foodservicefront/therapy-list/create-food.component';
 
 import {HomepageComponent} from "./homepage/homepage.component";
+import { FoodListComponent } from './components/foodservicefront/food-list/food-list.component'; // Ispravite putanju prema vašem projektu
+
 
 const routes: Routes = [
+  { path: 'food-list', component: FoodListComponent },
   { path: 'therapy-list', component: CreateFoodComponent },
   { path: 'home-radnik', component: HomeRadnikComponent },
   { path: 'create-appointment', component: CreateAppointmentComponent },
