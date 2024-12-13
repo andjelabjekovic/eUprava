@@ -45,11 +45,23 @@ func main() {
 	// Ruta za dobijanje liste hrane
 	getFoodList := router.Methods(http.MethodGet).Subrouter()
 	getFoodList.HandleFunc("/foods", foodServiceHandler.GetListFoodHandler)
-
+	
+	getFood := router.Methods(http.MethodGet).Subrouter()
+	getFood.HandleFunc("/food/{id}", foodServiceHandler.GetFoodByIDHandler)
+	
 	// Kreiranje novog unosa hrane(radi)
 	createFood := router.Methods(http.MethodPost).Subrouter()
 	createFood.HandleFunc("/food", foodServiceHandler.CreateFoodHandler)
 	createFood.Use(foodServiceHandler.MiddlewareFoodDeserialization)
+
+	createOrder := router.Methods(http.MethodPost).Subrouter()
+	createOrder.HandleFunc("/order", foodServiceHandler.OrderHandler)
+	createOrder.Use(foodServiceHandler.MiddlewareFoodDeserialization)
+
+	// Update postojeće hrane
+	updateFood := router.Methods(http.MethodPut).Subrouter()
+	updateFood.HandleFunc("/food/{id}", foodServiceHandler.UpdateFoodHandler)
+	updateFood.Use(foodServiceHandler.MiddlewareFoodDeserialization)
 
 	// Brisanje unosa hrane
 	deleteFoodEntry := router.Methods(http.MethodDelete).Subrouter()

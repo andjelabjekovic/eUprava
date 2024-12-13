@@ -26,7 +26,8 @@
           <a class="nav-link" *ngIf="(userType$ | async) === 'student'" href="/student-appointment-management">Healthcare</a>
         </li>
         <li *ngIf="isLoggedIn" class="nav-item">
-          <a class="nav-link" >Food</a>
+          <a class="nav-link" *ngIf="(userType$ | async) === 'student'" href="/student-homepage">Food</a>
+          <a class="nav-link" *ngIf="(userType$ | async) === 'cook'" href="/home-radnik">Food</a>
         </li>
 
         <li *ngIf="isLoggedIn" class="nav-item">

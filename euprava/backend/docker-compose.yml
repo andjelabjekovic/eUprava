@@ -67,27 +67,7 @@ services:
     networks:
       - network
       
-  dorm_service:
-    image: dorm_service
-    container_name: dorm_service
-    build:
-      context: ./dorm-service/
-      dockerfile: ./Dockerfile
-    restart: always
-    ports:
-      - ${DORM_SERVICE_PORT}:${DORM_SERVICE_PORT}
-    environment:
-      DORM_SERVICE_PORT: ${DORM_SERVICE_PORT}
-      DORM_SERVICE_HOST: ${DORM_SERVICE_HOST}
-      DORM_DB_HOST: ${DORM_DB_HOST}
-      DORM_DB_PORT: ${DORM_DB_PORT}
-    depends_on:
-      - dorm_db
-    networks:
-      - network
-    volumes:
-      - logs_volume:/logs
-       
+  
   auth-service:
     build:
       context: ./auth-service
@@ -127,39 +107,7 @@ services:
     networks:
       - network
 
-  university-service:
-    build:
-      context: ./university-service
-    restart: always
-    container_name: university-service
-    ports:
-      - 8088:8088
-    environment:
-      - PORT=8088
-      - MONGO_DB_URI=mongodb://root:pass@university_data_base:27017
-    networks:
-      - network
-
-  university_data_base:
-    hostname: "university_data_base"
-    container_name: "university_data_base"
-    image: mongo
-    restart: always
-    ports:
-      - "27018:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: pass
-      MONGO_INITDB_DATABASE: studentDB
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok'
-      interval: 10s
-      timeout: 10s
-      retries: 10
-    volumes:
-      - university_data_base:/data/db
-    networks:
-      - network
+  
       
   healthcare_db:
     image: mongo
@@ -172,19 +120,6 @@ services:
     image: mongo
     container_name: food_db
     restart: on-failure
-    networks:
-      - network
-
-  dorm_db:
-    hostname: dorm_db
-    container_name: dorm_db
-    image: mongo
-    restart: on-failure
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok'
-      interval: 10s
-      timeout: 10s
-      retries: 10
     networks:
       - network
 

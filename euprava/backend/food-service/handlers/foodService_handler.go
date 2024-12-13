@@ -19,6 +19,7 @@ type FoodServiceHandler struct {
 
 type KeyProduct struct{}
 type KeyFood struct{}
+type KeyOrder struct{}
 
 func NewFoodServiceHandler(l *log.Logger, r *data.FoodServiceRepo) *FoodServiceHandler {
 	return &FoodServiceHandler{l, r}
@@ -44,9 +45,37 @@ func (h *FoodServiceHandler) GetListFoodHandler(rw http.ResponseWriter, r *http.
 		return
 	}
 }
+func (h *FoodServiceHandler) CreateFoodHandler(rw http.ResponseWriter, r *http.Request) {
+	userID := r.URL.Query().Get("cookId")
+	if userID == "" {
+		http.Error(rw, "cookId is required", http.StatusBadRequest)
+		return
+	}
+	// Konverzija userID (cookId) u ObjectID
+	oid, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		h.logger.Println("Invalid cookId:", err)
+		http.Error(rw, "Invalid cookId", http.StatusBadRequest)
+		return
+	}
+	
+	foodData := r.Context().Value(KeyFood{}).(*data.Food)
+	fmt.Printf("Received food entry: %+v\n", foodData)
+
+	foodData.UserID = oid
+
+	err = h.foodServiceRepo.CreateFoodEntry(r, foodData)
+	if err != nil {
+		h.logger.Print("Database exception: ", err)
+		http.Error(rw, "Error creating food entry.", http.StatusInternalServerError)
+		return
+	}
+	// Postavi status kod 201 Created
+	rw.WriteHeader(http.StatusCreated)
+}
 
 // CreateFoodHandler kreira novi unos hrane sa stanjem postavljenim na 'Neporucena'
-func (h *FoodServiceHandler) CreateFoodHandler(rw http.ResponseWriter, r *http.Request) {
+/*func (h *FoodServiceHandler) CreateFoodHandler(rw http.ResponseWriter, r *http.Request) {
 	// Preuzmi podatke o hrani iz konteksta
 	foodData := r.Context().Value(KeyFood{}).(*data.Food)
 
@@ -73,7 +102,111 @@ func (h *FoodServiceHandler) CreateFoodHandler(rw http.ResponseWriter, r *http.R
 	// Pošalji JSON odgovor nazad klijentu
 	rw.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(rw).Encode(response)
+}*/
+func (h *FoodServiceHandler) GetFoodByIDHandler(rw http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr, ok := vars["id"]
+    if !ok {
+        http.Error(rw, "ID is required", http.StatusBadRequest)
+        return
+    }
+
+    // Konverzija idStr u ObjectID
+    oid, err := primitive.ObjectIDFromHex(idStr)
+    if err != nil {
+        h.logger.Println("Invalid ID:", err)
+        http.Error(rw, "Invalid ID", http.StatusBadRequest)
+        return
+    }
+
+    food, err := h.foodServiceRepo.GetFoodByID(r, oid)
+    if err != nil {
+        h.logger.Print("Database exception: ", err)
+        http.Error(rw, "Error fetching food entry.", http.StatusInternalServerError)
+        return
+    }
+
+    if food == nil {
+        // Nema dokumenata za taj ID
+        http.Error(rw, "Food not found", http.StatusNotFound)
+        return
+    }
+
+    rw.Header().Set("Content-Type", "application/json")
+    rw.WriteHeader(http.StatusOK)
+    json.NewEncoder(rw).Encode(food)
 }
+
+// CreateFoodHandler kreira novi unos hrane sa stanjem postavljenim na 'Neporucena'
+func (h *FoodServiceHandler) OrderHandler(rw http.ResponseWriter, r *http.Request) {
+	// Preuzmi podatke o hrani iz konteksta
+	orderData := r.Context().Value(KeyOrder{}).(*data.Order)
+
+	fmt.Printf("Received food entry: %+v\n", orderData)
+
+	// Kreiraj novi unos hrane koristeći metodu iz repo
+	err := h.foodServiceRepo.CreateOrder(r, orderData)
+	if err != nil {
+		h.logger.Print("Database exception: ", err)
+		http.Error(rw, "Error creating food entry.", http.StatusInternalServerError)
+		return
+	}
+
+	// Postavi status kod 201 Created
+	rw.WriteHeader(http.StatusCreated)
+
+	// Definiši strukturu odgovora sa porukom i podacima o kreiranoj hrani
+	response := map[string]interface{}{
+		"message":  "Food entry created successfully",
+		"foodName": orderData.Food.FoodName,
+	}
+
+	// Pošalji JSON odgovor nazad klijentu
+	rw.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(rw).Encode(response)
+}
+func (h *FoodServiceHandler) UpdateFoodHandler(rw http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr, ok := vars["id"]
+    if !ok {
+        http.Error(rw, "ID is required", http.StatusBadRequest)
+        return
+    }
+
+    // Konverzija idStr u ObjectID
+    foodID, err := primitive.ObjectIDFromHex(idStr)
+    if err != nil {
+        h.logger.Println("Invalid ID:", err)
+        http.Error(rw, "Invalid ID", http.StatusBadRequest)
+        return
+    }
+
+    // Preuzmi podatke o hrani iz konteksta (nova vrednost foodName)
+    foodData := r.Context().Value(KeyFood{}).(*data.Food)
+    if foodData.FoodName == "" {
+        http.Error(rw, "foodName cannot be empty", http.StatusBadRequest)
+        return
+    }
+
+    // Pozovi repo metodu za ažuriranje unosa
+    err = h.foodServiceRepo.UpdateFoodEntry(r, foodID, foodData)
+    if err != nil {
+        h.logger.Print("Database exception: ", err)
+        http.Error(rw, "Error updating food entry.", http.StatusInternalServerError)
+        return
+    }
+
+    // Ako je sve prošlo dobro
+    rw.WriteHeader(http.StatusOK)
+    response := map[string]interface{}{
+        "message":  "Food entry updated successfully",
+        "foodId":   foodID.Hex(),
+        "foodName": foodData.FoodName,
+    }
+    rw.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(rw).Encode(response)
+}
+
 
 // mongo
 // editFood
@@ -200,6 +333,7 @@ func (h *FoodServiceHandler) SaveTherapy(rw http.ResponseWriter, r *http.Request
 	}
 	rw.WriteHeader(http.StatusOK)
 }
+
 /*func (h *FoodServiceHandler) EditFood(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -262,7 +396,7 @@ func (r *FoodServiceHandler) EditFood(rw http.ResponseWriter, h *http.Request) {
 	vars := mux.Vars(h)
 	id := vars["id"]
 
-	food := h.Context().Value(KeyProduct{}).(*data.Food)
+	food := h.Context().Value(KeyFood{}).(*data.Food)
 
 	err := r.foodServiceRepo.EditFood(id, food)
 	if err != nil {
@@ -410,6 +544,7 @@ func (h *FoodServiceHandler) MiddlewareFoodDeserialization(next http.Handler) ht
 		next.ServeHTTP(rw, r)
 	})
 }
+
 
 // MiddlewareFoodDeserialization je middleware funkcija koja preuzima podatke o hrani iz zahteva i stavlja ih u kontekst
 /*func (h *FoodServiceHandler) MiddlewareFoodDeserialization(next http.Handler) http.Handler {

@@ -15,15 +15,22 @@ import {RegisterComponent} from "./components/register/register.component";
 
 import { HomeRadnikComponent } from './components/foodservicefront/home-radnik/home-radnik.component'; // Apsolutna putanja do komponente
 import { CreateFoodComponent } from './components/foodservicefront/therapy-list/create-food.component';
-
 import {HomepageComponent} from "./homepage/homepage.component";
 import { FoodListComponent } from './components/foodservicefront/food-list/food-list.component'; // Ispravite putanju prema vašem projektu
-
+import { StudentHomepageComponent } from './components/foodservicefront/student-homepage/student-homepage.component';  // Importuj StudentHomepageComponent
+import { FoodListStudentComponent } from './components/foodservicefront/food-list-student/food-list-student.component';  // Importuj FoodListStudentComponent
+import { CreateFoodRealComponent } from './components/foodservicefront/create-food-real/create-food-real.component'; // Dodaj CreateFoodRealComponent
+import { UpdateFoodComponent } from './components/foodservicefront/update-food/update-food.component'; // Dodaj UpdateFoodComponent
 
 const routes: Routes = [
+  { path: 'student-homepage', component: StudentHomepageComponent },  
+  { path: 'food-list-student', component: FoodListStudentComponent },
   { path: 'food-list', component: FoodListComponent },
   { path: 'therapy-list', component: CreateFoodComponent },
   { path: 'home-radnik', component: HomeRadnikComponent },
+  { path: 'create-food-real', component: CreateFoodRealComponent },  // Ruta za CreateFoodRealComponent
+  { path: 'update-food/:id', component: UpdateFoodComponent },  // Ruta za UpdateFoodComponent sa parametrom
+  
   { path: 'create-appointment', component: CreateAppointmentComponent },
   { path: 'student-appointment-management', component: StudentAppointmentManagementComponent },
   { path: 'student-appointment-list', component: StudentAppointmentListComponent },

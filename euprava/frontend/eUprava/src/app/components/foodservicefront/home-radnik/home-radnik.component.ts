@@ -17,7 +17,12 @@ export class HomeRadnikComponent {
     viewMenu() {
       this.router.navigate(['/food-list']);
     }
-  
+    createFood() {
+      this.router.navigate(['/create-food-real']);
+    }
+    updateFood() {
+      this.router.navigate(['/update-food']);
+    }
   
    
   

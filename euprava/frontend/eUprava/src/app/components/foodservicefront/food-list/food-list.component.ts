@@ -1,7 +1,7 @@
 import { Component,OnInit } from '@angular/core';
 import { FoodData } from 'src/app/models/food.model';
 import { FoodService } from 'src/app/services/food.service';
-
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-food-list',
   templateUrl: './food-list.component.html',
@@ -11,7 +11,7 @@ export class FoodListComponent implements OnInit {
 
   foods: FoodData[] = []; // Lista hrane
 
-  constructor(private foodService: FoodService) {}
+  constructor(private foodService: FoodService,private router: Router) {}
 
   ngOnInit(): void {
     this.loadFoods(); // Učitava hranu kada se komponenta inicijalizuje
@@ -39,5 +39,10 @@ export class FoodListComponent implements OnInit {
       }
     );
   }
+  goToUpdate(foodId: string): void {
+    // Navigiraj na '/update-food/<foodId>'
+    this.router.navigate(['/update-food', foodId]);
+  }
+ 
   
 }

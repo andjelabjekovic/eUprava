@@ -119,9 +119,9 @@ type Order struct {
 type StatusO string
 
 const (
-	Pending   StatusO = "Pending"
-	Completed StatusO = "Completed"
-	Cancelled StatusO = "Cancelled"
+	Ordered   StatusO = "Ordered"
+	NotOrdered StatusO = "NotOrdered"
+	
 )
 
 type Orders []*Order

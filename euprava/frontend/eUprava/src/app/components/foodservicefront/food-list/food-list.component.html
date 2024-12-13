@@ -14,10 +14,10 @@
       <td>{{ food.foodName }}</td> <!-- Prikazuje foodName umesto name -->
       <td>{{ food.stanje2 }}</td>  <!-- Ako želite prikazati stanje2 -->
       <td>
-        <button (click)="deleteFood(food.id)">Delete</button> <!-- Dugme za Delete -->
+        <button (click)="deleteFood(food.id!)">Delete</button> <!-- Dugme za Delete -->
       </td>
       <td>
-        <button >Update</button> 
+        <button (click)="goToUpdate(food.id!)">Update</button> 
       </td>
     </tr>
   </tbody>

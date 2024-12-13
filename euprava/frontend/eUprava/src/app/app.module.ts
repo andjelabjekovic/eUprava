@@ -28,6 +28,9 @@ import { HomeRadnikComponent } from './components/foodservicefront/home-radnik/h
 
 import { HomepageComponent } from './homepage/homepage.component';
 import { FoodListComponent } from './components/foodservicefront/food-list/food-list.component';
+import { FoodListStudentComponent } from './components/foodservicefront/food-list-student/food-list-student.component';
+import { StudentHomepageComponent } from './components/foodservicefront/student-homepage/student-homepage.component';
+import { CreateFoodRealComponent } from './components/foodservicefront/create-food-real/create-food-real.component';
 
 
 @NgModule({
@@ -52,6 +55,9 @@ import { FoodListComponent } from './components/foodservicefront/food-list/food-
 
     HomepageComponent,
     FoodListComponent,
+    FoodListStudentComponent,
+    StudentHomepageComponent,
+    CreateFoodRealComponent,
 
   ],
   imports: [
