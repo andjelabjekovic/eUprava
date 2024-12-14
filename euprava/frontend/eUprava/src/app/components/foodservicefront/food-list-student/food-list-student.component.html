@@ -6,15 +6,14 @@
     <thead>
       <tr>
         <th>Naziv</th>
-        <th>Status</th> <!-- Dodao sam Status, ako je relevantan -->
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let food of foods">
         <td>{{ food.foodName }}</td> <!-- Prikazuje foodName umesto name -->
-        <td>{{ food.stanje2 }}</td>  <!-- Ako želite prikazati stanje2 -->
+        
         <td>
-          <button (click)="Order(food.id!)">Order</button> <!-- Dugme za Delete -->
+          <button  (click)="orderFood(food.id!)">Order</button> <!-- Dugme za Delete -->
         </td>
         
       </tr>

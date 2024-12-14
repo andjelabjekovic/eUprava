@@ -54,10 +54,14 @@ func main() {
 	createFood.HandleFunc("/food", foodServiceHandler.CreateFoodHandler)
 	createFood.Use(foodServiceHandler.MiddlewareFoodDeserialization)
 
-	createOrder := router.Methods(http.MethodPost).Subrouter()
-	createOrder.HandleFunc("/order", foodServiceHandler.OrderHandler)
-	createOrder.Use(foodServiceHandler.MiddlewareFoodDeserialization)
+	getAllOrders := router.Methods(http.MethodGet).Subrouter()
+	getAllOrders.HandleFunc("/order", foodServiceHandler.GetAllOrdersHandler)
 
+
+	createOrder := router.Methods(http.MethodPost).Subrouter()
+	createOrder.HandleFunc("/order", foodServiceHandler.CreateOrderHandler)
+	createOrder.Use(foodServiceHandler.MiddlewareOrderDeserialization)
+	
 	// Update postojeće hrane
 	updateFood := router.Methods(http.MethodPut).Subrouter()
 	updateFood.HandleFunc("/food/{id}", foodServiceHandler.UpdateFoodHandler)

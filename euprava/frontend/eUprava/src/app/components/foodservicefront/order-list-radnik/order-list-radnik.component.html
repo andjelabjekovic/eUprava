@@ -1,0 +1,33 @@
+<!-- src/app/components/order-list-radnik/order-list-radnik.component.html -->
+
+<div class="order-list-container">
+    <h2>Lista Porudžbina</h2>
+  
+    <!-- Prikazivanje indikatora učitavanja -->
+    <div *ngIf="isLoading">
+      <p>Učitavanje porudžbina...</p>
+    </div>
+  
+    <!-- Prikazivanje poruke o grešci -->
+    <div *ngIf="errorMessage">
+      <p class="error">{{ errorMessage }}</p>
+    </div>
+  
+    <!-- Prikazivanje porudžbina kada postoje -->
+    <div *ngIf="!isLoading && !errorMessage && orders.length > 0">
+      <ul>
+        <li *ngFor="let order of orders">
+          {{ order.food.foodName }}
+          <button>Otkazi</button>
+        </li>
+        
+      </ul>
+      
+    </div>
+  
+    <!-- Prikazivanje poruke ako nema porudžbina -->
+    <div *ngIf="!isLoading && !errorMessage && orders.length === 0">
+      <p>Nema porudžbina za prikaz.</p>
+    </div>
+  </div>
+  

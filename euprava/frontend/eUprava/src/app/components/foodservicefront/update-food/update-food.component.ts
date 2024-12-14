@@ -48,7 +48,7 @@ export class UpdateFoodComponent implements OnInit {
     if (this.updateForm.valid) {
       const updatedFood: FoodData = {
         foodName: this.updateForm.value.foodName,
-        stanje2: '' // Nije obavezno menjati, ostavi prazno ili uzmi staru vrednost ako treba
+        
       };
 
       this.foodService.updateFood(this.foodId, updatedFood).subscribe(

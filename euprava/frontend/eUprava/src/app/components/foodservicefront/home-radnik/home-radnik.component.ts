@@ -20,10 +20,10 @@ export class HomeRadnikComponent {
     createFood() {
       this.router.navigate(['/create-food-real']);
     }
-    updateFood() {
-      this.router.navigate(['/update-food']);
+   
+    viewOrders() {
+      this.router.navigate(['/order-list-radnik']);
     }
-  
    
   
   }

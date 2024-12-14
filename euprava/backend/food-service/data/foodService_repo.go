@@ -190,50 +190,46 @@ func (rr *FoodServiceRepo) CreateFoodEntry(r *http.Request, foodData *Food) erro
 }*/
 
 func (rr *FoodServiceRepo) UpdateFoodEntry(r *http.Request, foodID primitive.ObjectID, foodData *Food) error {
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-    foodCollection := rr.getCollection("food")
+	foodCollection := rr.getCollection("food")
 
-    filter := bson.M{"_id": foodID}
-    update := bson.M{"$set": bson.M{"foodName": foodData.FoodName}}
-    
-    _, err := foodCollection.UpdateOne(ctx, filter, update)
-    if err != nil {
-        return err
-    }
+	filter := bson.M{"_id": foodID}
+	update := bson.M{"$set": bson.M{"foodName": foodData.FoodName}}
 
-    return nil
+	_, err := foodCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 func (rr *FoodServiceRepo) GetFoodByID(r *http.Request, id primitive.ObjectID) (*Food, error) {
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-    foodCollection := rr.getCollection("food")
+	foodCollection := rr.getCollection("food")
 
-    filter := bson.M{"_id": id}
-    var food Food
-    err := foodCollection.FindOne(ctx, filter).Decode(&food)
-    if err != nil {
-        if err == mongo.ErrNoDocuments {
-            return nil, nil // Nema dokumenata za dati ID
-        }
-        return nil, err
-    }
+	filter := bson.M{"_id": id}
+	var food Food
+	err := foodCollection.FindOne(ctx, filter).Decode(&food)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil // Nema dokumenata za dati ID
+		}
+		return nil, err
+	}
 
-    return &food, nil
+	return &food, nil
 }
-
 
 func (rr *FoodServiceRepo) CreateFoodEntry(r *http.Request, foodData *Food) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	// Postavi jedinstveni ID za food entry
 	foodData.ID = primitive.NewObjectID()
-	// Ako Stanje2 nije definisano, postavi podrazumevanu vrednost (npr. Neprihvacena)
-	if foodData.Stanje2 == "" {
-		foodData.Stanje2 = Neprihvacena
-	}
+
 	// Nabavi kolekciju iz baze
 	foodCollection := rr.getCollection("food")
 	// Umetni novi unos u bazu
@@ -243,7 +239,60 @@ func (rr *FoodServiceRepo) CreateFoodEntry(r *http.Request, foodData *Food) erro
 	}
 	return nil
 }
+func (rr *FoodServiceRepo) GetAllOrders() ([]Order, error) {
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
 
+    orderCollection := rr.getCollection("order")
+
+    // Pripremamo prazan filter za sve dokumente
+    filter := bson.M{}
+    cursor, err := orderCollection.Find(ctx, filter)
+    if err != nil {
+        return nil, err
+    }
+    defer cursor.Close(ctx)
+
+    var orders []Order
+    err = cursor.All(ctx, &orders)
+    if err != nil {
+        return nil, err
+    }
+
+    return orders, nil
+}
+
+func (rr *FoodServiceRepo) CreateOrderEntry(r *http.Request, orderData *Order) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Postavi jedinstveni ID za order entry
+	orderData.ID = primitive.NewObjectID()
+
+	// Postavi default status ako želiš
+	orderData.StatusO = Neprihvacena
+	orderData.StatusO2 = Neotkazana
+
+	// Ako je potrebno, pronađi Food po ID-u
+	if !orderData.Food.ID.IsZero() {
+		foodCollection := rr.getCollection("food")
+		var food Food
+		err := foodCollection.FindOne(ctx, bson.M{"_id": orderData.Food.ID}).Decode(&food)
+		if err != nil {
+			return fmt.Errorf("Error finding food by ID: %v", err)
+		}
+		orderData.Food = food
+	}
+
+	orderCollection := rr.getCollection("order")
+	_, err := orderCollection.InsertOne(ctx, orderData)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+/*
 // metoda kreiranje porudzbine
 func (rr *FoodServiceRepo) CreateOrder(r *http.Request, orderData *Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -255,7 +304,8 @@ func (rr *FoodServiceRepo) CreateOrder(r *http.Request, orderData *Order) error 
 	foodId := orderData.Food.ID
 	// Postavi default stanje2 ako nije prosleđeno u telu zahteva
 	var food Food
-	orderData.StatusO = Ordered // Postavi default vrednost
+	orderData.StatusO = Neprihvacena // Postavi default vrednost
+	orderData.StatusO2 = StatusO2(Neotkazana)
 
 	// Loguj podatke pre umetanja
 	fmt.Printf("Inserting food data: %+v\n", orderData)
@@ -279,7 +329,7 @@ func (rr *FoodServiceRepo) CreateOrder(r *http.Request, orderData *Order) error 
 	// Vraćanje odgovora sa podacima
 	// Pretpostavljamo da vraćaš samo foodData u odgovoru ili ga možeš modifikovati kako bi uključio userId
 	return nil
-}
+}*/
 
 // GetListFood vraća sve unose hrane iz baze, sa dummy korisnikom (nil)
 func (rr *FoodServiceRepo) GetListFood() ([]Food, error) {
@@ -428,10 +478,6 @@ func (rr *FoodServiceRepo) EditFood(id string, food *Food) error {
 
 	if food.FoodName != "" {
 		update["foodName"] = food.FoodName
-	}
-
-	if food.Stanje2 != "" {
-		update["stanje2"] = food.Stanje2
 	}
 
 	updateQuery := bson.M{"$set": update}

@@ -35,7 +35,7 @@ export class CreateFoodRealComponent implements OnInit {
         
         user_id: loggedUserId,
         foodName: this.foodForm.value.foodName,
-        stanje2: ''
+      
       };
 
       console.log('Pokušaj kreiranja hrane:', foodData);

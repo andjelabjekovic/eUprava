@@ -41,15 +41,8 @@ type Food struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	UserID   primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
 	FoodName string             `bson:"foodName,omitempty" json:"foodName,omitempty"`
-	Stanje2  Stanje2            `bson:"stanje2,omitempty" json:"stanje2,omitempty"`
 }
 
-type Stanje2 string
-
-const (
-	Prihvacena   = "Prihvacena"
-	Neprihvacena = "Neprihvacena"
-)
 
 type Foods []*Food
 
@@ -114,13 +107,23 @@ type Order struct {
 	Food    Food               `bson:"food,omitempty" json:"food,omitempty"`
 	UserID  primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
 	StatusO StatusO            `bson:"statusO,omitempty" json:"statusO,omitempty"`
+	StatusO2 StatusO2            `bson:"statusO2,omitempty" json:"statusO2,omitempty"`
+
 }
 
 type StatusO string
 
 const (
-	Ordered   StatusO = "Ordered"
-	NotOrdered StatusO = "NotOrdered"
+	Prihvacena   StatusO = "Prihvacena"
+	Neprihvacena StatusO = "Neprihvacena"
+	
+)
+
+type StatusO2 string
+
+const (
+	Otkazana   StatusO2 = "Otkazana"
+	Neotkazana StatusO2 = "Neotkazana"
 	
 )
 
