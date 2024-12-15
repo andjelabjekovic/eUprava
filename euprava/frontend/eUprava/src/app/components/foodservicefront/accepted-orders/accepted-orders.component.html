@@ -1,0 +1,28 @@
+<div class="accepted-orders-container">
+    <h2>Prihvacene Porudžbine</h2>
+
+    <!-- Prikazivanje indikatora učitavanja -->
+    <div *ngIf="isLoading">
+      <p>Učitavanje prihvaćenih porudžbina...</p>
+    </div>
+
+    <!-- Prikazivanje poruke o grešci -->
+    <div *ngIf="errorMessage">
+      <p class="error">{{ errorMessage }}</p>
+    </div>
+
+    <!-- Prikazivanje prihvaćenih porudžbina kada postoje -->
+    <div *ngIf="!isLoading && !errorMessage && acceptedOrders.length > 0">
+      <ul>
+        <li *ngFor="let order of acceptedOrders">
+          <strong>{{ order.food.foodName }}</strong> 
+          <button>Otkazi</button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Prikazivanje poruke ako nema prihvaćenih porudžbina -->
+    <div *ngIf="!isLoading && !errorMessage && acceptedOrders.length === 0">
+      <p>Nema prihvaćenih porudžbina za prikaz.</p>
+    </div>
+</div>

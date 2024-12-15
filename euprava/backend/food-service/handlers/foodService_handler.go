@@ -157,6 +157,72 @@ func (h *FoodServiceHandler) MiddlewareOrderDeserialization(next http.Handler) h
 		next.ServeHTTP(rw, r)
 	})
 }
+
+// UpdateOrderStatusHandler ažurira status porudžbine na 'Prihvacena'
+func (h *FoodServiceHandler) UpdateOrderStatusHandler(rw http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr, ok := vars["id"]
+    if !ok {
+        http.Error(rw, "ID is required", http.StatusBadRequest)
+        return
+    }
+
+    // Konverzija idStr u ObjectID
+    orderID, err := primitive.ObjectIDFromHex(idStr)
+    if err != nil {
+        h.logger.Println("Invalid ID:", err)
+        http.Error(rw, "Invalid ID", http.StatusBadRequest)
+        return
+    }
+
+    // Ažuriraj status porudžbine na 'Prihvacena'
+    err = h.foodServiceRepo.UpdateOrderStatus(orderID, data.Prihvacena)
+    if err != nil {
+        if err.Error() == "order not found" {
+            http.Error(rw, "Order not found", http.StatusNotFound)
+            return
+        }
+        h.logger.Print("Database exception:", err)
+        http.Error(rw, "Error updating order status.", http.StatusInternalServerError)
+        return
+    }
+
+    // Ako je sve prošlo dobro, vrati odgovor
+    rw.Header().Set("Content-Type", "application/json")
+    rw.WriteHeader(http.StatusOK)
+    response := map[string]interface{}{
+        "message": "Order status updated successfully",
+        "orderId": orderID.Hex(),
+        "status":  data.Prihvacena,
+    }
+    json.NewEncoder(rw).Encode(response)
+}
+
+
+// GetAcceptedOrdersHandler vraća sve porudžbine čiji je statusO='Prihvacena'
+func (h *FoodServiceHandler) GetAcceptedOrdersHandler(rw http.ResponseWriter, r *http.Request) {
+    acceptedOrders, err := h.foodServiceRepo.GetAcceptedOrders()
+    if err != nil {
+        h.logger.Println("Error retrieving accepted orders:", err)
+        http.Error(rw, "Error retrieving accepted orders.", http.StatusInternalServerError)
+        return
+    }
+
+    if len(acceptedOrders) == 0 {
+        http.Error(rw, "No accepted orders found.", http.StatusNotFound)
+        return
+    }
+
+    rw.Header().Set("Content-Type", "application/json")
+    rw.WriteHeader(http.StatusOK)
+    if err := json.NewEncoder(rw).Encode(acceptedOrders); err != nil {
+        h.logger.Println("Error encoding accepted orders to JSON:", err)
+        http.Error(rw, "Error encoding data to JSON.", http.StatusInternalServerError)
+        return
+    }
+}
+
+
 func (h *FoodServiceHandler) GetAllOrdersHandler(rw http.ResponseWriter, r *http.Request) {
     orders, err := h.foodServiceRepo.GetAllOrders()
     if err != nil {

@@ -34,16 +34,19 @@ export class FoodService {
   updateFood(id: string, updatedFood: FoodData): Observable<any> {
     return this.http.put<any>(`${environment.baseApiUrl}/${this.url}/food/${id}`, updatedFood);
   }
-    // Dohvatanje svih porudžbina
     getAllOrders(): Observable<OrderData[]> {
       return this.http.get<OrderData[]>(`${environment.baseApiUrl}/${this.url}/order`);
     }
-  
-   // Nova metoda za ažuriranje Food-a (PUT)
-   /*updateFood(id: string, updatedFood: FoodData): Observable<any> {
-    return this.http.put<any>(`${environment.baseApiUrl}/${this.url}/${id}`, updatedFood);
-  }*/
-  // Nova metoda: Dohvatanje hrane po ID-u (potrebno za Update stranicu)
+
+   // Prihvatanje porudžbine (ažuriranje statusa na 'Prihvacena')
+   acceptOrder(orderId: string): Observable<any> {
+    return this.http.put<any>(`${environment.baseApiUrl}/${this.url}/order/${orderId}`, {});
+  }  
+  // Dohvatanje prihvaćenih porudžbina
+  getAcceptedOrders(): Observable<OrderData[]> {
+    return this.http.get<OrderData[]>(`${environment.baseApiUrl}/${this.url}/accepted-orders`);
+  }
+  // Dohvatanje hrane po ID-u (potrebno za Update stranicu)
   getFoodById(id: string): Observable<FoodData> {
     return this.http.get<FoodData>(`${environment.baseApiUrl}/${this.url}/${id}`);
   }

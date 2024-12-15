@@ -35,4 +35,19 @@ export class OrderListRadnikComponent implements OnInit {
       }
     );
   }
+  acceptOrder(orderId: string): void {
+    if (confirm("Da li ste sigurni da želite da prihvatite ovu porudžbinu?")) {
+      this.foodService.acceptOrder(orderId).subscribe(
+        response => {
+          console.log('Porudžbina prihvaćena:', response);
+          // Ponovo učitaj porudžbine da vidiš ažurirani status
+          this.loadOrders();
+        },
+        error => {
+          console.error('Greška prilikom prihvatanja porudžbine:', error);
+          this.errorMessage = 'Došlo je do greške prilikom prihvatanja porudžbine.';
+        }
+      );
+    }
+  }
 }

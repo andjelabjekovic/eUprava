@@ -18,7 +18,11 @@
       <ul>
         <li *ngFor="let order of orders">
           {{ order.food.foodName }}
-          <button>Otkazi</button>
+          <button 
+          (click)="acceptOrder(order.id!)" 
+          [disabled]="order.statusO === 'Prihvacena'">
+          Prihvati
+        </button>
         </li>
         
       </ul>

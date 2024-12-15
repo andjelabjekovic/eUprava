@@ -24,6 +24,11 @@ export class HomeRadnikComponent {
     viewOrders() {
       this.router.navigate(['/order-list-radnik']);
     }
+
+    
+    viewAcceptedOrders() {
+      this.router.navigate(['/accepted-orders']);
+    }
    
   
   }

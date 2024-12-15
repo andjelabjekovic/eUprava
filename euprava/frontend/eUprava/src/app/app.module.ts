@@ -32,6 +32,7 @@ import { FoodListStudentComponent } from './components/foodservicefront/food-lis
 import { StudentHomepageComponent } from './components/foodservicefront/student-homepage/student-homepage.component';
 import { CreateFoodRealComponent } from './components/foodservicefront/create-food-real/create-food-real.component';
 import { OrderListRadnikComponent } from './components/foodservicefront/order-list-radnik/order-list-radnik.component';
+import { AcceptedOrdersComponent } from './components/foodservicefront/accepted-orders/accepted-orders.component';
 
 
 @NgModule({
@@ -60,6 +61,7 @@ import { OrderListRadnikComponent } from './components/foodservicefront/order-li
     StudentHomepageComponent,
     CreateFoodRealComponent,
     OrderListRadnikComponent,
+    AcceptedOrdersComponent,
 
   ],
   imports: [

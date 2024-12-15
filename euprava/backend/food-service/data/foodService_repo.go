@@ -261,6 +261,51 @@ func (rr *FoodServiceRepo) GetAllOrders() ([]Order, error) {
 
     return orders, nil
 }
+func (rr *FoodServiceRepo) UpdateOrderStatus(orderID primitive.ObjectID, newStatus StatusO) error {
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    orderCollection := rr.getCollection("order") // Uveri se da je naziv kolekcije tačan
+
+    filter := bson.M{"_id": orderID}
+    update := bson.M{"$set": bson.M{"statusO": newStatus}}
+
+    result, err := orderCollection.UpdateOne(ctx, filter, update)
+    if err != nil {
+        return err
+    }
+
+    if result.MatchedCount == 0 {
+        return errors.New("order not found")
+    }
+
+    return nil
+}
+
+// GetAcceptedOrders vraća sve porudžbine čiji je statusO='Prihvacena'
+func (rr *FoodServiceRepo) GetAcceptedOrders() (Orders, error) {
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    orderCollection := rr.getCollection("order") // Proveri da li je naziv kolekcije tačan
+
+    filter := bson.M{"statusO": Prihvacena}
+    cursor, err := orderCollection.Find(ctx, filter)
+    if err != nil {
+        rr.logger.Println("Error finding accepted orders:", err)
+        return nil, err
+    }
+    defer cursor.Close(ctx)
+
+    var acceptedOrders Orders
+    if err := cursor.All(ctx, &acceptedOrders); err != nil {
+        rr.logger.Println("Error decoding accepted orders:", err)
+        return nil, err
+    }
+
+    return acceptedOrders, nil
+}
+
 
 func (rr *FoodServiceRepo) CreateOrderEntry(r *http.Request, orderData *Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
