@@ -54,8 +54,27 @@ func main() {
 	createFood.HandleFunc("/food", foodServiceHandler.CreateFoodHandler)
 	createFood.Use(foodServiceHandler.MiddlewareFoodDeserialization)
 
+	cancelOrder := router.Methods(http.MethodPut).Subrouter()
+	cancelOrder.HandleFunc("/order/{id}/cancel", foodServiceHandler.CancelOrderHandler)
+
+	getMyOrders := router.Methods(http.MethodGet).Subrouter()
+	getMyOrders.HandleFunc("/my-orders", foodServiceHandler.GetMyOrdersHandler)
+
+	//my orders
+	//getMyOrders := router.Methods(http.MethodGet).Subrouter()
+	//getMyOrders.HandleFunc("/order/my", foodServiceHandler.GetAllOrdersForUser)
+
+	//getMyOrders := router.Methods(http.MethodGet).Subrouter()
+	//getMyOrders.HandleFunc("/my-orders", foodServiceHandler.GetAllOrdersForUser)
+
+	//router.HandleFunc("/my-orders", foodServiceHandler.GetAllOrdersForUser).Methods(http.MethodGet)
+
 	getAllOrders := router.Methods(http.MethodGet).Subrouter()
 	getAllOrders.HandleFunc("/order", foodServiceHandler.GetAllOrdersHandler)
+
+	// Dohvatanje porudžbina ulogovanog korisnika sa statusO='Prihvacena' i statusO2='Neotkazana'
+	//getMyOrders := router.Methods(http.MethodGet).Subrouter()
+	//getMyOrders.HandleFunc("/my-orders", foodServiceHandler.GetAllMyOrdersHandler)
 
 	// Dohvatanje prihvaćenih porudžbina
 	getAcceptedOrders := router.Methods(http.MethodGet).Subrouter()

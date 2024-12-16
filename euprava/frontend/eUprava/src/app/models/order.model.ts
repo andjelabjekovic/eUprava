@@ -4,6 +4,7 @@ export interface OrderData {
       id: string;
       foodName?: string;
   };
+  userId?: string; // ID korisnika koji je kreirao porudžbinu
   statusO?: string; // Status porudžbine ('Prihvacena' ili 'Neprihvacena')
-  // Dodaj ostala polja ako je potrebno
+  statusO2?: string; // Status porudžbine ('Otkazana' ili 'Neotkazana')
 }

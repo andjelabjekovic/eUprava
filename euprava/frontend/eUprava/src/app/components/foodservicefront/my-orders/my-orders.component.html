@@ -1,0 +1,25 @@
+<div class="my-orders-container">
+  <h2>Moje Porudžbine</h2>
+
+  <div *ngIf="isLoading">
+    <p>Učitavanje porudžbina...</p>
+  </div>
+
+  <div *ngIf="errorMessage">
+    <p class="error">{{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && myOrders.length > 0">
+    <ul>
+      <li *ngFor="let order of myOrders">
+        <strong>{{ order.food.foodName }}</strong>
+        
+        <button (click)="cancelOrder(order.id!)">Otkazi</button>
+      </li>
+    </ul>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && myOrders.length === 0">
+    <p>Nema porudžbina za prikaz.</p>
+  </div>
+</div>

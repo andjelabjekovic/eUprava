@@ -157,6 +157,112 @@ func (rr *FoodServiceRepo) GetLoggedUser(r *http.Request) (*AuthUser, error) {
 
 	return &user, nil
 }
+/*func (rr *FoodServiceRepo) GetAllOrdersForUser(userID primitive.ObjectID) ([]Order, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	ordersCollection := rr.getCollection("orders")
+
+	filter := bson.M{
+		"userId":   userID,
+		"statusO":  "Neprihvacena",
+		"statusO2": "Neotkazana",
+	}
+
+	cursor, err := ordersCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var orders []Order
+	if err := cursor.All(ctx, &orders); err != nil {
+		rr.logger.Println(err)
+		return nil, err
+	}
+
+	return orders, nil
+}*/
+func (rr *FoodServiceRepo) GetMyOrders(userID primitive.ObjectID) (Orders, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	orderCollection := rr.getCollection("order") // Proveri da li je naziv kolekcije tačan
+
+	// Filter za korisničke porudžbine koje su prihvaćene i neotkazane
+	filter := bson.M{
+		"userId":   userID,
+		"statusO2": Neotkazana,
+	}
+
+	cursor, err := orderCollection.Find(ctx, filter)
+	if err != nil {
+		rr.logger.Println("Error finding user orders:", err)
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var myOrders Orders
+	if err := cursor.All(ctx, &myOrders); err != nil {
+		rr.logger.Println("Error decoding user orders:", err)
+		return nil, err
+	}
+
+	return myOrders, nil
+}
+
+func (rr *FoodServiceRepo) CancelOrder(orderID primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	orderCollection := rr.getCollection("order") // Naziv kolekcije mora biti tačan
+
+	filter := bson.M{"_id": orderID}
+	update := bson.M{"$set": bson.M{"statusO2": "Otkazana"}}
+
+	result, err := orderCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return errors.New("order not found")
+	}
+
+	return nil
+}
+
+// GetAllMyOrders vraća porudžbine korisnika sa statusO='Prihvacena' i statusO2='Neotkazana'
+/*func (rr *FoodServiceRepo) GetAllMyOrders(userID primitive.ObjectID) ([]Order, error) {
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    orderCollection := rr.getCollection("order")
+
+    // Definišemo filter za dohvat porudžbina koje pripadaju korisniku i zadovoljavaju uslove statusa
+    filter := bson.M{
+        "userId":  userID,
+        "statusO": Prihvacena,
+        "statusO2": Neotkazana,
+    }
+
+    cursor, err := orderCollection.Find(ctx, filter)
+    if err != nil {
+        rr.logger.Println("Error finding user's accepted and not canceled orders:", err)
+        return nil, err
+    }
+    defer cursor.Close(ctx)
+
+    var orders []Order
+    err = cursor.All(ctx, &orders)
+    if err != nil {
+        rr.logger.Println("Error decoding orders:", err)
+        return nil, err
+    }
+
+    rr.logger.Printf("Fetched %d orders for user %s with statusO='Prihvacena' and statusO2='Neotkazana'\n", len(orders), userID.Hex())
+    return orders, nil
+}*/
 
 /*
 func (rr *FoodServiceRepo) CreateFoodEntry(r *http.Request, foodData *Food) error {
@@ -240,72 +346,71 @@ func (rr *FoodServiceRepo) CreateFoodEntry(r *http.Request, foodData *Food) erro
 	return nil
 }
 func (rr *FoodServiceRepo) GetAllOrders() ([]Order, error) {
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-    orderCollection := rr.getCollection("order")
+	orderCollection := rr.getCollection("order")
 
-    // Pripremamo prazan filter za sve dokumente
-    filter := bson.M{}
-    cursor, err := orderCollection.Find(ctx, filter)
-    if err != nil {
-        return nil, err
-    }
-    defer cursor.Close(ctx)
+	// Pripremamo prazan filter za sve dokumente
+	filter := bson.M{"statusO2": Neotkazana}
+	cursor, err := orderCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
 
-    var orders []Order
-    err = cursor.All(ctx, &orders)
-    if err != nil {
-        return nil, err
-    }
+	var orders []Order
+	err = cursor.All(ctx, &orders)
+	if err != nil {
+		return nil, err
+	}
 
-    return orders, nil
+	return orders, nil
 }
 func (rr *FoodServiceRepo) UpdateOrderStatus(orderID primitive.ObjectID, newStatus StatusO) error {
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-    orderCollection := rr.getCollection("order") // Uveri se da je naziv kolekcije tačan
+	orderCollection := rr.getCollection("order") // Uveri se da je naziv kolekcije tačan
 
-    filter := bson.M{"_id": orderID}
-    update := bson.M{"$set": bson.M{"statusO": newStatus}}
+	filter := bson.M{"_id": orderID}
+	update := bson.M{"$set": bson.M{"statusO": newStatus}}
 
-    result, err := orderCollection.UpdateOne(ctx, filter, update)
-    if err != nil {
-        return err
-    }
+	result, err := orderCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
 
-    if result.MatchedCount == 0 {
-        return errors.New("order not found")
-    }
+	if result.MatchedCount == 0 {
+		return errors.New("order not found")
+	}
 
-    return nil
+	return nil
 }
 
 // GetAcceptedOrders vraća sve porudžbine čiji je statusO='Prihvacena'
 func (rr *FoodServiceRepo) GetAcceptedOrders() (Orders, error) {
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-    orderCollection := rr.getCollection("order") // Proveri da li je naziv kolekcije tačan
+	orderCollection := rr.getCollection("order") // Proveri da li je naziv kolekcije tačan
 
-    filter := bson.M{"statusO": Prihvacena}
-    cursor, err := orderCollection.Find(ctx, filter)
-    if err != nil {
-        rr.logger.Println("Error finding accepted orders:", err)
-        return nil, err
-    }
-    defer cursor.Close(ctx)
+	filter := bson.M{"statusO": Prihvacena, "statusO2": Neotkazana}
+	cursor, err := orderCollection.Find(ctx, filter)
+	if err != nil {
+		rr.logger.Println("Error finding accepted orders:", err)
+		return nil, err
+	}
+	defer cursor.Close(ctx)
 
-    var acceptedOrders Orders
-    if err := cursor.All(ctx, &acceptedOrders); err != nil {
-        rr.logger.Println("Error decoding accepted orders:", err)
-        return nil, err
-    }
+	var acceptedOrders Orders
+	if err := cursor.All(ctx, &acceptedOrders); err != nil {
+		rr.logger.Println("Error decoding accepted orders:", err)
+		return nil, err
+	}
 
-    return acceptedOrders, nil
+	return acceptedOrders, nil
 }
-
 
 func (rr *FoodServiceRepo) CreateOrderEntry(r *http.Request, orderData *Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

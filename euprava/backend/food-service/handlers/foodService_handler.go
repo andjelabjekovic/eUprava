@@ -223,6 +223,35 @@ func (h *FoodServiceHandler) GetAcceptedOrdersHandler(rw http.ResponseWriter, r 
 }
 
 
+func (h *FoodServiceHandler) CancelOrderHandler(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	orderIDStr := vars["id"]
+
+	orderID, err := primitive.ObjectIDFromHex(orderIDStr)
+	if err != nil {
+		h.logger.Printf("Invalid order ID: %v", err)
+		http.Error(rw, "Invalid order ID format", http.StatusBadRequest)
+		return
+	}
+
+	err = h.foodServiceRepo.CancelOrder(orderID)
+	if err != nil {
+		if err.Error() == "order not found" {
+			h.logger.Printf("Order not found: %v", orderIDStr)
+			http.Error(rw, "Order not found", http.StatusNotFound)
+			return
+		}
+		h.logger.Printf("Error updating order status: %v", err)
+		http.Error(rw, "Error updating order status", http.StatusInternalServerError)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	rw.Write([]byte(`{"message": "Order canceled successfully"}`))
+}
+
+
+
 func (h *FoodServiceHandler) GetAllOrdersHandler(rw http.ResponseWriter, r *http.Request) {
     orders, err := h.foodServiceRepo.GetAllOrders()
     if err != nil {
@@ -273,6 +302,98 @@ func (h *FoodServiceHandler) CreateOrderHandler(rw http.ResponseWriter, r *http.
 
 	// Postavi status kod 201 Created
 	rw.WriteHeader(http.StatusCreated)
+}
+// GetAllMyOrdersHandler vraća porudžbine ulogovanog korisnika sa statusO='Prihvacena' i statusO2='Neotkazana'
+/*func (h *FoodServiceHandler) GetAllMyOrdersHandler(rw http.ResponseWriter, r *http.Request) {
+    // Dobavi ulogovanog korisnika
+    user, err := h.foodServiceRepo.GetLoggedUser(r)
+    if err != nil {
+        h.logger.Println("Error retrieving logged user:", err)
+        http.Error(rw, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+
+    // Dobavi porudžbine za korisnika sa zadatim uslovima
+    orders, err := h.foodServiceRepo.GetAllMyOrders(user.ID)
+    if err != nil {
+        h.logger.Println("Error fetching user's orders:", err)
+        http.Error(rw, "Error fetching orders", http.StatusInternalServerError)
+        return
+    }
+
+    // Vrati porudžbine kao JSON odgovor
+    rw.Header().Set("Content-Type", "application/json")
+    rw.WriteHeader(http.StatusOK)
+    json.NewEncoder(rw).Encode(orders)
+}
+*/
+
+/*func (h *FoodServiceHandler) GetAllOrdersForUser(rw http.ResponseWriter, r *http.Request) {
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		http.Error(rw, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	if err != nil {
+		h.logger.Print("Invalid user ID format: ", err)
+		http.Error(rw, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	orders, err := h.foodServiceRepo.GetAllOrdersForUser(userID)
+	if err != nil {
+		h.logger.Print("Database exception: ", err)
+		http.Error(rw, "Error retrieving orders.", http.StatusInternalServerError)
+		return
+	}
+
+	if len(orders) == 0 {
+		http.Error(rw, "No orders found for the user.", http.StatusNotFound)
+		return
+	}
+
+	err = json.NewEncoder(rw).Encode(orders)
+	if err != nil {
+		h.logger.Print("Error encoding orders to JSON: ", err)
+		http.Error(rw, "Error encoding orders to JSON.", http.StatusInternalServerError)
+		return
+	}
+}*/
+func (h *FoodServiceHandler) GetMyOrdersHandler(rw http.ResponseWriter, r *http.Request) {
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		http.Error(rw, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	if err != nil {
+		h.logger.Println("Invalid user ID format:", err)
+		http.Error(rw, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	myOrders, err := h.foodServiceRepo.GetMyOrders(userID)
+	if err != nil {
+		h.logger.Println("Error retrieving orders for user:", err)
+		http.Error(rw, "Error retrieving orders for user.", http.StatusInternalServerError)
+		return
+	}
+
+	if len(myOrders) == 0 {
+		http.Error(rw, "No orders found for user.", http.StatusNotFound)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(rw).Encode(myOrders); err != nil {
+		h.logger.Println("Error encoding orders to JSON:", err)
+		http.Error(rw, "Error encoding data to JSON.", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *FoodServiceHandler) UpdateFoodHandler(rw http.ResponseWriter, r *http.Request) {

@@ -23,8 +23,10 @@ import { CreateFoodRealComponent } from './components/foodservicefront/create-fo
 import { UpdateFoodComponent } from './components/foodservicefront/update-food/update-food.component'; // Dodaj UpdateFoodComponent
 import { OrderListRadnikComponent } from './components/foodservicefront/order-list-radnik/order-list-radnik.component';
 import { AcceptedOrdersComponent } from './components/foodservicefront/accepted-orders/accepted-orders.component';
+import { MyOrdersComponent } from './components/foodservicefront/my-orders/my-orders.component';
 
 const routes: Routes = [
+  {path: 'my-orders',component:MyOrdersComponent},
   {path:'accepted-orders',component:AcceptedOrdersComponent},
   { path: 'order-list-radnik',component: OrderListRadnikComponent },
   { path: 'student-homepage', component: StudentHomepageComponent },  

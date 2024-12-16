@@ -29,10 +29,23 @@ export class AcceptedOrdersComponent implements OnInit {
       },
       error => {
         console.error('Greška prilikom preuzimanja prihvaćenih porudžbina:', error);
-        this.errorMessage = 'Došlo je do greške prilikom preuzimanja prihvaćenih porudžbina.';
+        this.errorMessage = 'Nema prihvaćenih porudžbina.';
         this.isLoading = false;
       }
     );
   }
 
+  cancelOrder(orderId: string): void {
+    this.foodService.cancelOrder(orderId).subscribe(
+      () => {
+        // Ažuriraj prikaz nakon uspešnog otkazivanja
+        this.acceptedOrders = this.acceptedOrders.filter(order => order.id !== orderId);
+      },
+      (error) => {
+        console.error('Greška prilikom otkazivanja porudžbine:', error);
+      }
+    );
+  }
 }
+
+

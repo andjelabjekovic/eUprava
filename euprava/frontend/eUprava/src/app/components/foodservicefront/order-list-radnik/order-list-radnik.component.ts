@@ -30,7 +30,7 @@ export class OrderListRadnikComponent implements OnInit {
       },
       error => {
         console.error('Greška prilikom preuzimanja porudžbina:', error);
-        this.errorMessage = 'Došlo je do greške prilikom preuzimanja porudžbina.';
+        this.errorMessage = 'Nema porudžbina.';
         this.isLoading = false;
       }
     );

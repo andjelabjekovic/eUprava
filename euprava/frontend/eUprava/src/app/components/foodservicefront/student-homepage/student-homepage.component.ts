@@ -12,5 +12,8 @@ export class StudentHomepageComponent {
 viewOrder() {
   this.router.navigate(['/food-list-student']);
 }
+viewMyOrder() {
+  this.router.navigate(['/my-orders']);
+}
 
 }
