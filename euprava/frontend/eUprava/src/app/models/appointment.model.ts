@@ -12,8 +12,8 @@ export interface Appointment {
 
 export interface TherapyData {
   id?: string;
-  StudentHealthRecordId: string;
-  Diagnosis: string;
+  status: string;
+  diagnosis: string;
 }
 
 

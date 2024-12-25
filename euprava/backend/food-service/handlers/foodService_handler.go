@@ -512,7 +512,7 @@ func (r *FoodServiceHandler) GetTherapiesFromHealthCare(rw http.ResponseWriter, 
 		return
 	}
 }
-
+/*
 func (r *FoodServiceHandler) GetTherapies(rw http.ResponseWriter, h *http.Request) {
 	therapies, err := r.foodServiceRepo.GetAllTherapiesFromFoodService()
 	if err != nil {
@@ -532,6 +532,81 @@ func (r *FoodServiceHandler) GetTherapies(rw http.ResponseWriter, h *http.Reques
 		http.Error(rw, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+}*/
+/*func (r *FoodServiceHandler) GetTherapies(rw http.ResponseWriter, req *http.Request) {
+    // 1. Loguj ulazak u handler
+    r.logger.Println("Entering GetTherapies handler")
+
+    // 2. Loguj pokušaj dobijanja terapija iz repozitorijuma
+    r.logger.Println("Fetching therapies from the foodServiceRepo...")
+    therapies, err := r.foodServiceRepo.GetAllTherapiesFromFoodService()
+    if err != nil {
+        r.logger.Printf("Error retrieving therapies from Food Service: %v\n", err)
+        http.Error(rw, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+
+    // 3. Proveri da li je rezultat prazan
+    if therapies == nil {
+        r.logger.Println("No therapies found in the repository.")
+        http.Error(rw, "No therapies found", http.StatusNotFound)
+        return
+    }
+
+    r.logger.Printf("Successfully retrieved therapies: %+v\n", therapies)
+
+    // 4. Loguj pokušaj konverzije do JSON-a
+    r.logger.Println("Converting therapies to JSON...")
+    err = therapies.ToJSON(rw)
+    if err != nil {
+        r.logger.Printf("Error converting therapies to JSON: %v\n", err)
+        http.Error(rw, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+
+    // 5. Loguj uspešno pisanje odgovora
+    r.logger.Println("Successfully wrote therapies to response in JSON format.")
+}
+*/
+func (r *FoodServiceHandler) GetTherapies(rw http.ResponseWriter, req *http.Request) {
+    // 1. Loguj ulazak u handler
+    r.logger.Println("[res-api] Entering GetTherapies handler")
+
+    // 2. Loguj pokušaj dobijanja terapija iz repozitorijuma
+    r.logger.Println("[res-api] Fetching therapies from the foodServiceRepo...")
+    therapies, err := r.foodServiceRepo.GetAllTherapiesFromFoodService()
+    if err != nil {
+        r.logger.Printf("[res-api] Error retrieving therapies from Food Service: %v", err)
+        http.Error(rw, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+
+    // 3. Proveri da li je rezultat prazan
+    if therapies == nil {
+        r.logger.Println("[res-api] No therapies found in the repository.")
+        http.Error(rw, "No therapies found", http.StatusNotFound)
+        return
+    }
+
+    // 4. Loguj podatke koje si dobio (kao JSON string, da se vide celi ID-jevi i ostala polja)
+    therapiesJSON, err := json.Marshal(therapies)
+    if err != nil {
+        r.logger.Printf("[res-api] Error marshaling therapies for logging: %v", err)
+    } else {
+        r.logger.Printf("[res-api] Successfully retrieved therapies: %s", string(therapiesJSON))
+    }
+
+    // 5. Serijalizacija podataka u JSON i pisanje u response
+    r.logger.Println("[res-api] Converting therapies to JSON...")
+    err = therapies.ToJSON(rw)
+    if err != nil {
+        r.logger.Printf("[res-api] Error converting therapies to JSON: %v", err)
+        http.Error(rw, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+
+    // 6. Završna poruka
+    r.logger.Println("[res-api] Successfully wrote therapies to response in JSON format.")
 }
 
 func (h *FoodServiceHandler) SaveTherapy(rw http.ResponseWriter, r *http.Request) {

@@ -5,14 +5,17 @@
   <table *ngIf="therapies.length > 0" class="table">
     <thead>
       <tr>
-        <th>ID Zdravstvenog Kartona Studenta</th>
+        <th>ID Terapije</th>
         <th>Dijagnoza</th>
+        <th>Status</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let therapy of therapies">
-        <td>{{ therapy.StudentHealthRecordId }}</td>
-        <td>{{ therapy.Diagnosis }}</td>
+        <td>{{ therapy.id  }}</td>
+        <td>{{ therapy.diagnosis || '' }}</td>
+        <td>{{ therapy.status || '' }}</td>
+        <button>Odobri</button>
       </tr>
     </tbody>
   </table>

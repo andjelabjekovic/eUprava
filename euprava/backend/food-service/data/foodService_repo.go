@@ -693,7 +693,7 @@ func GetCachedTherapies() Therapies {
 }
 
 // funkcija dobavlja sve terapije iz Food servisa.
-func (rr *FoodServiceRepo) GetAllTherapiesFromFoodService() (Therapies, error) {
+/*func (rr *FoodServiceRepo) GetAllTherapiesFromFoodService() (Therapies, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
 	defer cancel()
 
@@ -714,6 +714,94 @@ func (rr *FoodServiceRepo) GetAllTherapiesFromFoodService() (Therapies, error) {
 
 	return therapies, nil
 }
+*/
+/*func (rr *FoodServiceRepo) GetAllTherapiesFromFoodService() (Therapies, error) {
+    // 1. Loguj ulazak u funkciju
+    rr.logger.Println("Entering GetAllTherapiesFromFoodService")
+
+    // 2. Kreiraj novi kontekst sa timeout-om
+    rr.logger.Println("Creating context with 50 second timeout")
+    ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+    defer cancel()
+
+    // 3. Dobavi kolekciju 'therapies' iz baze 'MongoDatabase'
+    rr.logger.Println("Retrieving 'therapies' collection from the 'MongoDatabase'")
+    therapiesCollection := rr.cli.Database("MongoDatabase").Collection("therapies")
+
+    // 4. Upit koji pronalazi sve dokumente
+    rr.logger.Println("Finding all therapies in the database...")
+    cursor, err := therapiesCollection.Find(ctx, bson.M{})
+    if err != nil {
+        rr.logger.Printf("Error occurred while trying to find therapies: %v\n", err)
+        return nil, err
+    }
+    defer func() {
+        rr.logger.Println("Closing cursor")
+        cursor.Close(ctx)
+    }()
+
+    rr.logger.Println("Successfully retrieved cursor from the database")
+
+    // 5. Učitaj sve rezultate iz kursora u strukturu `therapies`
+    var therapies Therapies
+    rr.logger.Println("Reading all documents from cursor into 'therapies'")
+    if err := cursor.All(ctx, &therapies); err != nil {
+        rr.logger.Printf("Error occurred while decoding cursor result: %v\n", err)
+        return nil, err
+    }
+
+    rr.logger.Printf("Successfully retrieved therapies: %+v\n", therapies)
+
+    // 6. Loguj izlazak iz funkcije
+    rr.logger.Println("Leaving GetAllTherapiesFromFoodService")
+
+    return therapies, nil
+}*/
+func (rr *FoodServiceRepo) GetAllTherapiesFromFoodService() (Therapies, error) {
+    rr.logger.Println("[res-store] Entering GetAllTherapiesFromFoodService")
+
+    // Kreiramo kontekst sa timeout-om
+    ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+    defer cancel()
+
+    // Uzimamo kolekciju
+    rr.logger.Println("[res-store] Retrieving 'therapies' collection from the 'MongoDatabase'")
+    therapiesCollection := rr.cli.Database("MongoDatabase").Collection("therapies")
+
+    // Pravimo upit za sve dokumente
+    rr.logger.Println("[res-store] Finding all therapies in the database...")
+    cursor, err := therapiesCollection.Find(ctx, bson.M{})
+    if err != nil {
+        rr.logger.Printf("[res-store] Error retrieving therapies from Food Service: %v", err)
+        return nil, err
+    }
+    defer func() {
+        rr.logger.Println("[res-store] Closing cursor")
+        cursor.Close(ctx)
+    }()
+
+    rr.logger.Println("[res-store] Successfully retrieved cursor from the database")
+
+    // Mapiramo rezultate iz kursora u slice struktura (Therapies)
+    var therapies Therapies
+    rr.logger.Println("[res-store] Reading all documents from cursor into 'therapies'")
+    if err := cursor.All(ctx, &therapies); err != nil {
+        rr.logger.Printf("[res-store] Error occurred while decoding cursor result: %v", err)
+        return nil, err
+    }
+
+    // Izloguj sadržaj rezultata kao JSON, da vidiš šta si stvarno dobio
+    b, err := json.Marshal(therapies)
+    if err != nil {
+        rr.logger.Printf("[res-store] Error marshaling therapies for logging: %v", err)
+    } else {
+        rr.logger.Printf("[res-store] Successfully retrieved therapies (JSON): %s", string(b))
+    }
+
+    rr.logger.Println("[res-store] Leaving GetAllTherapiesFromFoodService")
+    return therapies, nil
+}
+
 
 func (rr *FoodServiceRepo) SaveTherapyData(therapyData *TherapyData) error {
 

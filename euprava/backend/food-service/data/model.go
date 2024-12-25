@@ -95,13 +95,12 @@ type Student struct {
 type Students []*Student
 
 type TherapyData struct {
-	ID        primitive.ObjectID `bson:"therapyId,omitempty" json:"therapyId,omitempty"`
-	StudentID primitive.ObjectID `bson:"studentId,omitempty" json:"studentId,omitempty"`
-	Diagnosis string             `bson:"diagnosis,omitempty" json:"diagnosis,omitempty"`
-	Status    Status             `bson:"status,omitempty" json:"status,omitempty"`
-	//Medications  []Medication       `bson:"medications,omitempty" json:"medications,omitempty"`
-	//Instructions string             `bson:"instructions,omitempty" json:"instructions,omitempty"`
+    ID                    primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+    StudentHealthRecordID primitive.ObjectID `bson:"studentHealthRecordID,omitempty" json:"studentHealthRecordID,omitempty"`
+    Diagnosis             string             `bson:"diagnosis,omitempty" json:"diagnosis,omitempty"`
+    Status                Status             `bson:"status,omitempty" json:"status,omitempty"`
 }
+
 type Order struct {
 	ID      primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Food    Food               `bson:"food,omitempty" json:"food,omitempty"`

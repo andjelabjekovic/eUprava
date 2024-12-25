@@ -739,7 +739,8 @@ func (rr *HealthCareRepo) SaveTherapyData(therapyData *TherapyData) (primitive.O
 
 	// Vraća ID umetnutog dokumenta
 	insertedID := result.InsertedID.(primitive.ObjectID)
-
+// **Bitno**: upišemo ga nazad u struct da bismo ga kasnije prosledili Food Service-u
+	therapyData.ID = insertedID
 	return insertedID, nil
 }
 
