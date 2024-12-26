@@ -28,4 +28,21 @@ export class CreateFoodComponent implements OnInit {
       }
     );
   }
+
+  approveTherapy(therapyId: string | undefined): void {
+    if (!therapyId) {
+      return;
+    }
+    this.therapyService.approveTherapy(therapyId).subscribe(
+      response => {
+        console.log('Terapija uspešno odobrena:', response);
+        // Nakon uspešnog odobravanja, možete ponovo učitati listu terapija
+        this.loadTherapies();
+      },
+      error => {
+        console.error('Greška prilikom odobravanja terapije:', error);
+      }
+    );
+  }
+
 }

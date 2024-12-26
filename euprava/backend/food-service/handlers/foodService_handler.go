@@ -157,6 +157,32 @@ func (h *FoodServiceHandler) MiddlewareOrderDeserialization(next http.Handler) h
 		next.ServeHTTP(rw, r)
 	})
 }
+func (f *FoodServiceHandler) ApproveTherapy(rw http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    therapyIDStr := vars["therapyId"]
+
+    // Konvertovanje string ID u ObjectID (ako koristite MongoDB)
+    therapyObjectID, err := primitive.ObjectIDFromHex(therapyIDStr)
+    if err != nil {
+        f.logger.Println("Invalid therapy ID format:", err)
+        rw.WriteHeader(http.StatusBadRequest)
+        rw.Write([]byte("Invalid therapy ID format"))
+        return
+    }
+
+    // Repozitorijumska logika za ažuriranje
+    err = f.foodServiceRepo.ApproveTherapy(therapyObjectID)
+    if err != nil {
+        f.logger.Println("Error approving therapy:", err)
+        rw.WriteHeader(http.StatusInternalServerError)
+        rw.Write([]byte("Error approving therapy"))
+        return
+    }
+
+    // Ako je sve ok
+    rw.WriteHeader(http.StatusOK)
+    rw.Write([]byte("Therapy approved successfully"))
+}
 
 // UpdateOrderStatusHandler ažurira status porudžbine na 'Prihvacena'
 func (h *FoodServiceHandler) UpdateOrderStatusHandler(rw http.ResponseWriter, r *http.Request) {

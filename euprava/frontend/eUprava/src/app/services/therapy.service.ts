@@ -17,5 +17,12 @@ export class TherapyService {
     return this.http.get<TherapyData[]>(`${environment.baseApiUrl}/${this.url}/therapies`);
   }
 
+  
+  // Metoda za odobravanje terapije
+  // Očekuje se da napravite adekvatnu PUT ili POST rutu na backendu
+  approveTherapy(therapyId: string): Observable<any> {
+    // Primer: PUT /food/therapy/<therapyId>/approve
+    return this.http.put<any>(`${environment.baseApiUrl}/${this.url}/therapy/${therapyId}/approve`, {});
+  }
   // Optionally other CRUD methods can be added here
 }

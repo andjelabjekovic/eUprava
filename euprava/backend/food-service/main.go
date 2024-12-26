@@ -113,6 +113,11 @@ func main() {
 	getTherapies := router.Methods(http.MethodGet).Subrouter()
 	getTherapies.HandleFunc("/therapies", foodServiceHandler.GetTherapies)
 
+
+	editTherapy := router.Methods(http.MethodPut).Subrouter()
+	editTherapy.HandleFunc("/therapy/{therapyId}/approve", foodServiceHandler.ApproveTherapy)
+	editTherapy.Use(foodServiceHandler.MiddlewareFoodDeserialization)
+
 	saveTherapy := router.Methods(http.MethodPost).Subrouter()
 	saveTherapy.HandleFunc("/therapy", foodServiceHandler.SaveTherapy)
 	saveTherapy.Use(foodServiceHandler.MiddlewareTherapyDeserialization)

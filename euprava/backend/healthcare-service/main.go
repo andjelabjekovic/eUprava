@@ -70,7 +70,7 @@ func main() {
 	router.HandleFunc("/appointments/byUser", healthCareHandler.GetAllAppointmentsForUser).Methods(http.MethodGet)
 
 	router.HandleFunc("/appointments/reservedByStudent", healthCareHandler.GetAllReservedAppointmentsForUser).Methods(http.MethodGet)
-
+	
 	saveTherapy := router.Methods(http.MethodPost).Subrouter()
 	saveTherapy.HandleFunc("/therapy", healthCareHandler.SaveAndShareTherapyDataWithDietService)
 	saveTherapy.Use(healthCareHandler.MiddlewareTherapyDeserialization)

@@ -157,32 +157,35 @@ func (rr *FoodServiceRepo) GetLoggedUser(r *http.Request) (*AuthUser, error) {
 
 	return &user, nil
 }
-/*func (rr *FoodServiceRepo) GetAllOrdersForUser(userID primitive.ObjectID) ([]Order, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 
-	ordersCollection := rr.getCollection("orders")
+/*
+	func (rr *FoodServiceRepo) GetAllOrdersForUser(userID primitive.ObjectID) ([]Order, error) {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
 
-	filter := bson.M{
-		"userId":   userID,
-		"statusO":  "Neprihvacena",
-		"statusO2": "Neotkazana",
+		ordersCollection := rr.getCollection("orders")
+
+		filter := bson.M{
+			"userId":   userID,
+			"statusO":  "Neprihvacena",
+			"statusO2": "Neotkazana",
+		}
+
+		cursor, err := ordersCollection.Find(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		defer cursor.Close(ctx)
+
+		var orders []Order
+		if err := cursor.All(ctx, &orders); err != nil {
+			rr.logger.Println(err)
+			return nil, err
+		}
+
+		return orders, nil
 	}
-
-	cursor, err := ordersCollection.Find(ctx, filter)
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var orders []Order
-	if err := cursor.All(ctx, &orders); err != nil {
-		rr.logger.Println(err)
-		return nil, err
-	}
-
-	return orders, nil
-}*/
+*/
 func (rr *FoodServiceRepo) GetMyOrders(userID primitive.ObjectID) (Orders, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -366,6 +369,79 @@ func (rr *FoodServiceRepo) GetAllOrders() ([]Order, error) {
 	}
 
 	return orders, nil
+}
+
+func (fr *FoodServiceRepo) ApproveTherapy(therapyID primitive.ObjectID) error {
+	// 1) Ažuriranje statusa u lokalnoj bazi
+	if err := fr.updateTherapyStatusInDB(therapyID, Done); err != nil {
+		fr.logger.Println("Error updating therapy status in DB:", err)
+		return err
+	}
+
+	// 2) (Opcionalno) Slanje obaveštenja HealthCare servisu:
+	if err := fr.notifyHealthCareAboutStatus(therapyID, Done); err != nil {
+		fr.logger.Println("Error notifying HealthCare service:", err)
+		// Možete odlučiti da li ovde vraćate grešku ili ne
+		return err
+	}
+
+	return nil
+}
+
+func (fr *FoodServiceRepo) updateTherapyStatusInDB(therapyID primitive.ObjectID, newStatus Status) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	therapiesCollection := fr.getCollection("therapies")
+
+	filter := bson.M{"_id": therapyID}
+	update := bson.M{"$set": bson.M{"status": newStatus}}
+
+	_, err := therapiesCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (fr *FoodServiceRepo) notifyHealthCareAboutStatus(therapyID primitive.ObjectID, newStatus Status) error {
+	// 1) Kreirate payload
+	payload := map[string]interface{}{
+		"id":     therapyID.Hex(),
+		"status": newStatus,
+	}
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	fr.logger.Printf("[notifyHealthCareAboutStatus] Sending payload: %s", string(jsonBytes))
+
+	// 2) Endpoint HealthCare servisa
+	healthCareHost := os.Getenv("HEALTHCARE_SERVICE_HOST")
+	healthCarePort := os.Getenv("HEALTHCARE_SERVICE_PORT")
+	// npr. PUT http://healthcare:8080/therapy/...
+	endpoint := fmt.Sprintf("http://%s:%s/updateTherapy", healthCareHost, healthCarePort)
+
+	// 3) HTTP request
+	req, err := http.NewRequest("PUT", endpoint, bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("healthcare service returned non-OK status code: %d", resp.StatusCode)
+	}
+	fr.logger.Printf("poslato")
+
+	return nil
 }
 func (rr *FoodServiceRepo) UpdateOrderStatus(orderID primitive.ObjectID, newStatus StatusO) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -758,50 +834,49 @@ func GetCachedTherapies() Therapies {
     return therapies, nil
 }*/
 func (rr *FoodServiceRepo) GetAllTherapiesFromFoodService() (Therapies, error) {
-    rr.logger.Println("[res-store] Entering GetAllTherapiesFromFoodService")
+	rr.logger.Println("[res-store] Entering GetAllTherapiesFromFoodService")
 
-    // Kreiramo kontekst sa timeout-om
-    ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
-    defer cancel()
+	// Kreiramo kontekst sa timeout-om
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+	defer cancel()
 
-    // Uzimamo kolekciju
-    rr.logger.Println("[res-store] Retrieving 'therapies' collection from the 'MongoDatabase'")
-    therapiesCollection := rr.cli.Database("MongoDatabase").Collection("therapies")
+	// Uzimamo kolekciju
+	rr.logger.Println("[res-store] Retrieving 'therapies' collection from the 'MongoDatabase'")
+	therapiesCollection := rr.cli.Database("MongoDatabase").Collection("therapies")
 
-    // Pravimo upit za sve dokumente
-    rr.logger.Println("[res-store] Finding all therapies in the database...")
-    cursor, err := therapiesCollection.Find(ctx, bson.M{})
-    if err != nil {
-        rr.logger.Printf("[res-store] Error retrieving therapies from Food Service: %v", err)
-        return nil, err
-    }
-    defer func() {
-        rr.logger.Println("[res-store] Closing cursor")
-        cursor.Close(ctx)
-    }()
+	// Pravimo upit za sve dokumente
+	rr.logger.Println("[res-store] Finding all therapies in the database...")
+	cursor, err := therapiesCollection.Find(ctx, bson.M{})
+	if err != nil {
+		rr.logger.Printf("[res-store] Error retrieving therapies from Food Service: %v", err)
+		return nil, err
+	}
+	defer func() {
+		rr.logger.Println("[res-store] Closing cursor")
+		cursor.Close(ctx)
+	}()
 
-    rr.logger.Println("[res-store] Successfully retrieved cursor from the database")
+	rr.logger.Println("[res-store] Successfully retrieved cursor from the database")
 
-    // Mapiramo rezultate iz kursora u slice struktura (Therapies)
-    var therapies Therapies
-    rr.logger.Println("[res-store] Reading all documents from cursor into 'therapies'")
-    if err := cursor.All(ctx, &therapies); err != nil {
-        rr.logger.Printf("[res-store] Error occurred while decoding cursor result: %v", err)
-        return nil, err
-    }
+	// Mapiramo rezultate iz kursora u slice struktura (Therapies)
+	var therapies Therapies
+	rr.logger.Println("[res-store] Reading all documents from cursor into 'therapies'")
+	if err := cursor.All(ctx, &therapies); err != nil {
+		rr.logger.Printf("[res-store] Error occurred while decoding cursor result: %v", err)
+		return nil, err
+	}
 
-    // Izloguj sadržaj rezultata kao JSON, da vidiš šta si stvarno dobio
-    b, err := json.Marshal(therapies)
-    if err != nil {
-        rr.logger.Printf("[res-store] Error marshaling therapies for logging: %v", err)
-    } else {
-        rr.logger.Printf("[res-store] Successfully retrieved therapies (JSON): %s", string(b))
-    }
+	// Izloguj sadržaj rezultata kao JSON, da vidiš šta si stvarno dobio
+	b, err := json.Marshal(therapies)
+	if err != nil {
+		rr.logger.Printf("[res-store] Error marshaling therapies for logging: %v", err)
+	} else {
+		rr.logger.Printf("[res-store] Successfully retrieved therapies (JSON): %s", string(b))
+	}
 
-    rr.logger.Println("[res-store] Leaving GetAllTherapiesFromFoodService")
-    return therapies, nil
+	rr.logger.Println("[res-store] Leaving GetAllTherapiesFromFoodService")
+	return therapies, nil
 }
-
 
 func (rr *FoodServiceRepo) SaveTherapyData(therapyData *TherapyData) error {
 

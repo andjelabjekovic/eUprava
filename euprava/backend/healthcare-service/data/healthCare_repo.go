@@ -6,17 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/gorilla/sessions"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"os"
-	"time"
 )
 
 type HealthCareRepo struct {
@@ -739,7 +740,7 @@ func (rr *HealthCareRepo) SaveTherapyData(therapyData *TherapyData) (primitive.O
 
 	// Vraća ID umetnutog dokumenta
 	insertedID := result.InsertedID.(primitive.ObjectID)
-// **Bitno**: upišemo ga nazad u struct da bismo ga kasnije prosledili Food Service-u
+	// **Bitno**: upišemo ga nazad u struct da bismo ga kasnije prosledili Food Service-u
 	therapyData.ID = insertedID
 	return insertedID, nil
 }
@@ -923,10 +924,11 @@ func (rr *HealthCareRepo) UpdateTherapyFromFoodService(updatedTherapy *TherapyDa
 
 	var existingTherapy *TherapyData
 	for _, therapy := range rr.allTherapies {
-		if therapy.ID == updatedTherapy.ID {
+		if therapy.ID.Hex() == updatedTherapy.ID.Hex() {
 			existingTherapy = therapy
 			break
 		}
+
 	}
 
 	if existingTherapy == nil {
@@ -940,7 +942,7 @@ func (rr *HealthCareRepo) UpdateTherapyFromFoodService(updatedTherapy *TherapyDa
 
 	therapiesCollection := rr.getCollection("therapies")
 
-	filter := bson.M{"therapyId": updatedTherapy.ID}
+	filter := bson.M{"_id": updatedTherapy.ID}
 	update := bson.M{"$set": bson.M{
 		"status": existingTherapy.Status,
 	}}
@@ -951,6 +953,7 @@ func (rr *HealthCareRepo) UpdateTherapyFromFoodService(updatedTherapy *TherapyDa
 		return err
 	}
 
+	rr.logger.Printf("promenjeno")
 	return nil
 }
 

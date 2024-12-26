@@ -15,7 +15,7 @@
         <td>{{ therapy.id  }}</td>
         <td>{{ therapy.diagnosis || '' }}</td>
         <td>{{ therapy.status || '' }}</td>
-        <button>Odobri</button>
+        <button (click)="approveTherapy(therapy.id)">Odobri</button>
       </tr>
     </tbody>
   </table>
