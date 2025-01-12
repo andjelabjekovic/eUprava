@@ -194,8 +194,7 @@ func (rr *FoodServiceRepo) GetMyOrders(userID primitive.ObjectID) (Orders, error
 
 	// Filter za korisničke porudžbine koje su prihvaćene i neotkazane
 	filter := bson.M{
-		"userId":   userID,
-		"statusO2": Neotkazana,
+		"userId": userID,
 	}
 
 	cursor, err := orderCollection.Find(ctx, filter)
@@ -471,7 +470,7 @@ func (rr *FoodServiceRepo) GetAcceptedOrders() (Orders, error) {
 
 	orderCollection := rr.getCollection("order") // Proveri da li je naziv kolekcije tačan
 
-	filter := bson.M{"statusO": Prihvacena, "statusO2": Neotkazana}
+	filter := bson.M{"statusO": Prihvacena}
 	cursor, err := orderCollection.Find(ctx, filter)
 	if err != nil {
 		rr.logger.Println("Error finding accepted orders:", err)

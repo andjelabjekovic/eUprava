@@ -13,11 +13,42 @@
     <ul>
       <li *ngFor="let order of myOrders">
         <strong>{{ order.food.foodName }}</strong>
-        
-        <button (click)="cancelOrder(order.id!)">Otkazi</button>
+  
+        <button (click)="cancelOrder(order.id!)"
+                [disabled]="order.statusO === 'Prihvacena'">
+          Otkazi
+        </button>
+  
+        <!-- 1) Ako je "Otkazana" (statusO2), prikaži poruku -->
+        <ng-container *ngIf="order.statusO2 === 'Otkazana'; else checkStatusO">
+          <span>
+            Žao nam je... ponestalo nam je sastojaka. <br />
+            Poručite nešto drugo sa menu-ja.
+          </span>
+        </ng-container>
+  
+        <!-- 2) Ako nije "Otkazana", proveravamo statusO da li je "Prihvacena" ili "Neprihvacena" -->
+        <ng-template #checkStatusO>
+          <ng-container *ngIf="order.statusO === 'Prihvacena'; else checkNeprihvacena">
+            <span>
+              prihvaćeno! <br />
+              Porudžbina stiže svakog minuta!
+            </span>
+          </ng-container>
+        </ng-template>
+  
+        <!-- 3) Ako nije ni "Prihvacena" (u order.statusO), onda proveravamo "Neprihvacena" -->
+        <ng-template #checkNeprihvacena>
+          <span *ngIf="order.statusO === 'Neprihvacena'">
+            Još uvek radnik nije video porudžbinu, molim Vas sačekajte.
+          </span>
+        </ng-template>
+  
       </li>
     </ul>
   </div>
+  
+  
 
   <div *ngIf="!isLoading && !errorMessage && myOrders.length === 0">
     <p>Nema porudžbina za prikaz.</p>
