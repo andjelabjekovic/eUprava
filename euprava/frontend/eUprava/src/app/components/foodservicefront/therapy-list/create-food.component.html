@@ -1,22 +1,28 @@
-<div *ngIf="therapies.length === 0">
+<div class="therapy-list-container">
+  <h2>Lista Terapija</h2>
+
+  <div *ngIf="therapies.length === 0">
     Nema dostupnih terapija.
   </div>
-  
+
   <table *ngIf="therapies.length > 0" class="table">
     <thead>
       <tr>
         <th>ID Terapije</th>
         <th>Dijagnoza</th>
         <th>Status</th>
+        <th>Akcije</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let therapy of therapies">
-        <td>{{ therapy.id  }}</td>
+        <td>{{ therapy.id }}</td>
         <td>{{ therapy.diagnosis || '' }}</td>
         <td>{{ therapy.status || '' }}</td>
-        <button (click)="approveTherapy(therapy.id)">Odobri</button>
+        <td>
+          <button class="btn-action" (click)="approveTherapy(therapy.id)">Odobri</button>
+        </td>
       </tr>
     </tbody>
   </table>
-  
+</div>

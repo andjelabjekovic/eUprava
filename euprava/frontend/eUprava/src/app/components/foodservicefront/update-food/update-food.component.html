@@ -1,7 +1,10 @@
-<form [formGroup]="updateForm" (ngSubmit)="onSubmit()">
-    <div>
+<div class="my-orders-container">
+  <h2>Izmena Hrane</h2>
+
+  <form [formGroup]="updateForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
       <label for="foodName">Novi Naziv Hrane:</label>
-      <input id="foodName" type="text" formControlName="foodName" />
+      <input id="foodName" type="text" formControlName="foodName" class="form-control" />
       <div *ngIf="hasError('foodName', 'maxlength')" class="text-danger">
         Maksimalno 100 karaktera za naziv hrane.
       </div>
@@ -9,7 +12,7 @@
         Ime je obavezno.
       </div>
     </div>
-  
-    <button type="submit">Sačuvaj</button>
+
+    <button type="submit" class="btn-submit">Sačuvaj</button>
   </form>
-  
+</div>

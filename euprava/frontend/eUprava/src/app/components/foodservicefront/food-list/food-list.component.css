@@ -1,0 +1,67 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #ffe4e1;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  .my-orders-container {
+    width: 95%;
+    max-width: 650px;
+    background-color: #fff0f5;
+    border-radius: 15px;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+    padding: 30px;
+    text-align: center;
+    margin: auto;
+  }
+  
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 25px;
+    color: #d87093;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+  }
+  
+  .table th, .table td {
+    padding: 12px 15px;
+    text-align: left;
+    border: 1px solid #ddd;
+    background-color: #ffe4e1;
+  }
+  
+  .table th {
+    background-color: #d87093;
+    color: #ffffff;
+  }
+  
+  .btn-action {
+    margin: 5px;
+    padding: 10px 15px;
+    font-size: 1rem;
+    color: #ffffff;
+    background-color: #d87093;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .btn-action:hover {
+    background-color: #c06085;
+  }
+  
+  .btn-action:disabled {
+    background-color: #dda0dd;
+    cursor: not-allowed;
+  }
+  

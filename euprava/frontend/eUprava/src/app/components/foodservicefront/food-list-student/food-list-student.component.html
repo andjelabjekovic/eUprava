@@ -1,7 +1,10 @@
-<div *ngIf="foods.length === 0">
+<div class="my-orders-container">
+  <h2>Dostupna Hrana</h2>
+
+  <div *ngIf="foods.length === 0">
     Nema dostupnih stavki hrane.
   </div>
-  
+
   <table *ngIf="foods.length > 0" class="table">
     <thead>
       <tr>
@@ -10,14 +13,11 @@
     </thead>
     <tbody>
       <tr *ngFor="let food of foods">
-        <td>{{ food.foodName }}</td> <!-- Prikazuje foodName umesto name -->
-        
+        <td>{{ food.foodName }}</td>
         <td>
-          <button  (click)="orderFood(food.id!)">Order</button> <!-- Dugme za Delete -->
+          <button (click)="orderFood(food.id!)">Order</button>
         </td>
-        
       </tr>
     </tbody>
-   
   </table>
-  
+</div>

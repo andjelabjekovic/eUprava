@@ -1,14 +1,18 @@
-<form [formGroup]="foodForm" (ngSubmit)="onSubmit()">
-  <div>
-    <label for="foodName">Naziv hrane:</label>
-    <input id="foodName" type="text" formControlName="foodName" />
-    <div *ngIf="hasError('foodName', 'maxlength')" class="text-danger">
-      Maksimalno 100 karaktera za naziv hrane.
-    </div>
-    <div *ngIf="hasError('foodName', 'required')" class="text-danger">
-      Ime je obavezno.
-    </div>
-  </div>
+<div class="my-orders-container">
+  <h2>Kreiranje Hrane</h2>
 
-  <button type="submit">Kreiraj hranu</button>
-</form>
+  <form [formGroup]="foodForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="foodName">Naziv hrane:</label>
+      <input id="foodName" type="text" formControlName="foodName" class="form-control" />
+      <div *ngIf="hasError('foodName', 'maxlength')" class="text-danger">
+        Maksimalno 100 karaktera za naziv hrane.
+      </div>
+      <div *ngIf="hasError('foodName', 'required')" class="text-danger">
+        Ime je obavezno.
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit">Kreiraj hranu</button>
+  </form>
+</div>
