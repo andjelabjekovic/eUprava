@@ -5,6 +5,8 @@ import { FoodData } from 'src/app/models/food.model';
 import { FoodService } from 'src/app/services/food.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { OrderData } from 'src/app/models/order.model'; // Importujte OrderData
+import { Router } from '@angular/router';
+
 
 @Component({
   selector: 'app-food-list-student',
@@ -17,7 +19,9 @@ export class FoodListStudentComponent implements OnInit {
 
   constructor(
     private foodService: FoodService, 
-    private authService: AuthService
+    private authService: AuthService,
+
+        private router: Router, 
   ) {}
 
   ngOnInit(): void {
@@ -51,6 +55,7 @@ export class FoodListStudentComponent implements OnInit {
       response => {
         console.log('Porudžbina uspešno kreirana:', response);
         // Opcionalno: Prikazati poruku o uspehu ili osvežiti listu
+        this.router.navigate(['/my-orders']);
         alert('Porudžbina je uspešno kreirana!');
       },
       error => {

@@ -3,6 +3,7 @@
 import { Component, OnInit } from '@angular/core';
 import { OrderData } from 'src/app/models/order.model';
 import { FoodService } from 'src/app/services/food.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-order-list-radnik',
@@ -15,7 +16,8 @@ export class OrderListRadnikComponent implements OnInit {
   isLoading: boolean = false; // Indikator učitavanja
   errorMessage: string = ''; // Poruka o grešci
 
-  constructor(private foodService: FoodService) { }
+  constructor(private foodService: FoodService,
+      private router: Router) { }
 
   ngOnInit(): void {
     this.loadOrders(); // Učitaj porudžbine prilikom inicijalizacije komponente
@@ -42,6 +44,7 @@ export class OrderListRadnikComponent implements OnInit {
           console.log('Porudžbina prihvaćena:', response);
           // Ponovo učitaj porudžbine da vidiš ažurirani status
           this.loadOrders();
+          this.router.navigate(['/accepted-orders']);
         },
         error => {
           console.error('Greška prilikom prihvatanja porudžbine:', error);

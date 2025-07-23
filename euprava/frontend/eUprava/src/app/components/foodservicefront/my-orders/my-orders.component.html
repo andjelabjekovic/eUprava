@@ -14,16 +14,26 @@
       <li *ngFor="let order of myOrders">
         <strong>{{ order.food.foodName }}</strong>
 
-        <button (click)="cancelOrder(order.id!)" [disabled]="order.statusO === 'Prihvacena'">
-          Otkazi
-        </button>
+   <button 
+  (click)="cancelOrder(order.id!)" 
+  [disabled]="order.statusO === 'Prihvacena' || order.statusO2 === 'Otkazana'">
+  Otkaži
+</button>
+
+
 
         <ng-container *ngIf="order.statusO2 === 'Otkazana'; else checkStatusO">
-          <span>
-            Žao nam je... ponestalo nam je sastojaka. <br />
-            Poručite nešto drugo sa menu-ja.
-          </span>
-        </ng-container>
+  <span *ngIf="order.statusO === 'Prihvacena'; else userCancelled">
+    Žao nam je... ponestalo nam je sastojaka. <br />
+    Poručite nešto drugo sa menu-ja.
+  </span>
+  <ng-template #userCancelled>
+    <span>
+      Uspešno ste otkazali porudžbinu.
+    </span>
+  </ng-template>
+</ng-container>
+
 
         <ng-template #checkStatusO>
           <ng-container *ngIf="order.statusO === 'Prihvacena'; else checkNeprihvacena">
