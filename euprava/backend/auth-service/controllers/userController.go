@@ -1,9 +1,7 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -74,7 +72,6 @@ func VerifyPassword(userPassword string, providedPassword string) (bool, string)
 
 	return check, msg
 }
-
 func Register() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
@@ -131,38 +128,36 @@ func Register() gin.HandlerFunc {
 		user.Token = &token
 		user.Refresh_token = &refreshToken
 
-		// Ubaci korisnika u kolekciju
 		resultInsertionNumber, insertErr := userCollection.InsertOne(ctx, user)
 		if insertErr != nil {
 			l.Println("Error inserting user:", insertErr.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": insertErr.Error()})
 			return
 		}
-		if err = RegisterIntoUni(&user); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error: unable to insert user into university. ": err.Error()})
-		}
 
 		c.JSON(http.StatusOK, resultInsertionNumber)
 	}
 }
 
-func RegisterIntoUni(user *models.User) error {
-	jsonData, err := json.Marshal(user)
-	if err != nil {
-		return err
-	}
+/*
+	func RegisterIntoUni(user *models.User) error {
+		jsonData, err := json.Marshal(user)
+		if err != nil {
+			return err
+		}
 
-	resp, err := http.Post("http://university-service:8088/students/create", "application/json", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+		resp, err := http.Post("http://university-service:8088/students/create", "application/json", bytes.NewBuffer(jsonData))
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return err
+		if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
+			return err
+		}
+		return nil
 	}
-	return nil
-}
+*/
 func Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		fmt.Println("Request headers:", c.Errors)
