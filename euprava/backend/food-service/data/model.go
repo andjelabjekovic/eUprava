@@ -38,13 +38,35 @@ const (
 type Users []*User
 
 type Food struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	UserID   primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
-	FoodName string             `bson:"foodName,omitempty" json:"foodName,omitempty"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	UserID    primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
+	FoodName  string             `bson:"foodName,omitempty" json:"foodName,omitempty"`
+	Type1     FoodType1          `bson:"type1,omitempty" json:"type1,omitempty"`
+	Type2     FoodType2          `bson:"type2,omitempty" json:"type2,omitempty"`
+	ImagePath string             `bson:"imagePath,omitempty" json:"imagePath,omitempty"`
 }
 
 
+
+
 type Foods []*Food
+
+type FoodType1 string
+
+const (
+	PASTA   FoodType1 = "PASTA"
+	PICA    FoodType1 = "PICA"
+	SALATA  FoodType1 = "SALATA"
+)
+
+type FoodType2 string
+
+const (
+	POSNO  FoodType2 = "POSNO"
+	MRSNO  FoodType2 = "MRSNO"
+)
+
+
 
 func (o *Food) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)

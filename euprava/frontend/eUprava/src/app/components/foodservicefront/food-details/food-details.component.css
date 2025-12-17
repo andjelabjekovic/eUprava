@@ -1,0 +1,28 @@
+.details-container {
+  max-width: 600px;
+  margin: 40px auto;
+  background: #fff0f5;
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 6px 8px rgba(0,0,0,0.2);
+}
+
+.food-image {
+  width: 100%;
+  max-height: 350px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+h2 {
+  color: #d87093;
+  margin-bottom: 15px;
+}
+
+.loading {
+  text-align: center;
+  margin-top: 50px;
+  font-size: 1.2rem;
+}

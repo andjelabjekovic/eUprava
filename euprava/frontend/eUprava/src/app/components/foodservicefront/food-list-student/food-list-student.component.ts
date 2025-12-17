@@ -6,6 +6,7 @@ import { FoodService } from 'src/app/services/food.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { OrderData } from 'src/app/models/order.model'; // Importujte OrderData
 import { Router } from '@angular/router';
+import { environment } from 'src/app/environments/environment';
 
 
 @Component({
@@ -39,6 +40,7 @@ export class FoodListStudentComponent implements OnInit {
     );
   }
 
+
   orderFood(foodId: string): void {
     const userId = this.authService.getUserId();
     if (!userId) {
@@ -65,4 +67,33 @@ export class FoodListStudentComponent implements OnInit {
       }
     );
   }
+
+ getImageSrc(food: FoodData): string {
+  if (food.imagePath) {
+    return `${environment.baseApiUrl}/food${food.imagePath}`;
+  }
+  return 'assets/no-image.png';
+}
+
+openDetails(foodId: string): void {
+  this.router.navigate(['/food', foodId]);
+}
+
+mapType1(type1?: string): string {
+  switch (type1) {
+    case 'PASTA': return 'Pasta';
+    case 'PICA': return 'Pica';
+    case 'SALATA': return 'Salata';
+    default: return '-';
+  }
+}
+
+mapType2(type2?: string): string {
+  switch (type2) {
+    case 'POSNO': return 'Posno';
+    case 'MRSNO': return 'Mrsno';
+    default: return '-';
+  }
+}
+
 }

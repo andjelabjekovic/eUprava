@@ -13,6 +13,64 @@
       </div>
     </div>
 
-    <button type="submit" class="btn-submit">Kreiraj hranu</button>
+    <div class="form-group">
+      <label for="type1">Tip 1:</label>
+      <select id="type1" formControlName="type1" class="form-control">
+        <option value="" disabled>Izaberi tip</option>
+        <option value="PASTA">Pasta</option>
+        <option value="PICA">Pica</option>
+        <option value="SALATA">Salata</option>
+      </select>
+      <div *ngIf="hasError('type1', 'required')" class="text-danger">
+        Tip 1 je obavezan.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="type2">Tip 2:</label>
+      <select id="type2" formControlName="type2" class="form-control">
+        <option value="" disabled>Izaberi tip</option>
+        <option value="POSNO">Posno</option>
+        <option value="MRSNO">Mrsno</option>
+      </select>
+      <div *ngIf="hasError('type2', 'required')" class="text-danger">
+        Tip 2 je obavezan.
+      </div>
+    </div>
+
+    <!-- Upload slike -->
+    <div class="form-group">
+      <label>Slika:</label>
+
+      <div class="image-picker-row">
+        <!-- Sakriven file input -->
+        <input
+          type="file"
+          id="image"
+          class="hidden-file-input"
+          accept="image/*"
+          (change)="onFileSelected($event)"
+        />
+
+        <!-- Instagram-style dugme -->
+        <label for="image" class="upload-btn" title="Dodaj sliku">
+          <span class="plus">+</span>
+        </label>
+
+        <!-- Preview -->
+        <div class="preview" *ngIf="imagePreviewUrl">
+          <img [src]="imagePreviewUrl" alt="Preview slike" />
+          <button type="button" class="remove-img" (click)="removeSelectedImage()">×</button>
+        </div>
+
+        <div class="no-preview" *ngIf="!imagePreviewUrl">
+          Nema izabrane slike
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit" [disabled]="foodForm.invalid || isSubmitting">
+      {{ isSubmitting ? 'Kreiranje...' : 'Kreiraj hranu' }}
+    </button>
   </form>
 </div>

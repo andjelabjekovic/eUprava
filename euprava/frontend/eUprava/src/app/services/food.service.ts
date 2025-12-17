@@ -14,6 +14,16 @@ export class FoodService {
   private url = "food";
   constructor(private http: HttpClient) { }
 
+  uploadFoodImage(foodId: string, file: File): Observable<any> {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  return this.http.post<any>(
+    `${environment.baseApiUrl}/${this.url}/food/${foodId}/image`,
+    formData
+  );
+}
+
   // Fetch all therapies
   getAllFoods(): Observable<FoodData[]> {
     return this.http.get<FoodData[]>(`${environment.baseApiUrl}/${this.url}/food`);
@@ -57,10 +67,12 @@ export class FoodService {
   getAcceptedOrders(): Observable<OrderData[]> {
     return this.http.get<OrderData[]>(`${environment.baseApiUrl}/${this.url}/accepted-orders`);
   }
-  // Dohvatanje hrane po ID-u (potrebno za Update stranicu)
-  getFoodById(id: string): Observable<FoodData> {
-    return this.http.get<FoodData>(`${environment.baseApiUrl}/${this.url}/${id}`);
-  }
+ getFoodById(id: string): Observable<FoodData> {
+  return this.http.get<FoodData>(
+    `${environment.baseApiUrl}/${this.url}/food/${id}`
+  );
+}
+
   /*getAllMyOrders(): Observable<OrderData[]> {
     return this.http.get<OrderData[]>(`${environment.baseApiUrl}/${this.url}/my-orders`);
   }*/

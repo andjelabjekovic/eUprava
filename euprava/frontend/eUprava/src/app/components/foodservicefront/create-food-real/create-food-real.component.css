@@ -1,80 +1,172 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #ffe4e1;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-  }
-  
-  .my-orders-container {
-    width: 95%;
-    max-width: 650px;
-    background-color: #fff0f5;
-    border-radius: 15px;
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-    padding: 30px;
-    text-align: center;
-    margin: auto;
-  }
-  
-  h2 {
-    font-size: 2rem;
-    margin-bottom: 25px;
-    color: #d87093;
-  }
-  
-  .form-group {
-    margin-bottom: 20px;
-    text-align: left;
-  }
-  
-  label {
-    font-size: 1.2rem;
-    color: #333;
-  }
-  
-  input[type="text"] {
-    width: 100%;
-    padding: 10px;
-    font-size: 1rem;
-    margin-top: 5px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-  
-  input[type="text"]:focus {
-    outline: none;
-    border-color: #d87093;
-    box-shadow: 0 0 5px rgba(216, 112, 147, 0.5);
-  }
-  
-  .text-danger {
-    color: red;
-    font-size: 0.9rem;
-    margin-top: 5px;
-  }
-  
-  .btn-submit {
-    background-color: #d87093;
-    color: #ffffff;
-    border: none;
-    padding: 12px 20px;
-    font-size: 1.2rem;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  
-  .btn-submit:hover {
-    background-color: #c06085;
-  }
-  
-  .btn-submit:disabled {
-    background-color: #dda0dd;
-    cursor: not-allowed;
-  }
-  
+  font-family: Arial, sans-serif;
+  background-color: #ffe4e1;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.my-orders-container {
+  width: 95%;
+  max-width: 650px;
+  background-color: #fff0f5;
+  border-radius: 15px;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  text-align: center;
+  margin: auto;
+}
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 25px;
+  color: #d87093;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+label {
+  font-size: 1.2rem;
+  color: #333;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #d87093;
+  box-shadow: 0 0 5px rgba(216, 112, 147, 0.5);
+}
+
+select.form-control {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
+
+select.form-control:focus {
+  outline: none;
+  border-color: #d87093;
+  box-shadow: 0 0 5px rgba(216, 112, 147, 0.5);
+}
+
+.text-danger {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.btn-submit {
+  background-color: #d87093;
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.btn-submit:hover {
+  background-color: #c06085;
+}
+
+.btn-submit:disabled {
+  background-color: #dda0dd;
+  cursor: not-allowed;
+}
+
+/* ===== Upload UI ===== */
+
+.hidden-file-input {
+  display: none;
+}
+
+.image-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.upload-btn {
+  width: 54px;
+  height: 54px;
+  border: 2px dashed #d87093;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #fff;
+  transition: transform 0.05s ease-in-out;
+}
+
+.upload-btn:active {
+  transform: scale(0.98);
+}
+
+.upload-btn .plus {
+  font-size: 28px;
+  line-height: 1;
+  color: #d87093;
+  font-weight: 700;
+  margin-top: -2px;
+}
+
+.preview {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-img {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 24px;
+  padding: 0;
+}
+
+.no-preview {
+  color: #555;
+  font-size: 0.95rem;
+}

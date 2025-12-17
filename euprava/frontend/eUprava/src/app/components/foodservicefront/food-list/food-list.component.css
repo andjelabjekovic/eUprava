@@ -9,7 +9,24 @@ body {
     align-items: center;
     min-height: 100vh;
   }
-  
+  .img-col {
+  width: 70px;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+
+.food-thumb {
+  width: 55px;
+  height: 55px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  background-color: #fff;
+}
+
   .my-orders-container {
     width: 95%;
     max-width: 650px;

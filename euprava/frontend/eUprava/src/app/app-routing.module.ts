@@ -24,6 +24,7 @@ import { UpdateFoodComponent } from './components/foodservicefront/update-food/u
 import { OrderListRadnikComponent } from './components/foodservicefront/order-list-radnik/order-list-radnik.component';
 import { AcceptedOrdersComponent } from './components/foodservicefront/accepted-orders/accepted-orders.component';
 import { MyOrdersComponent } from './components/foodservicefront/my-orders/my-orders.component';
+import { FoodDetailsComponent } from './components/foodservicefront/food-details/food-details.component';
 
 const routes: Routes = [
   {path: 'my-orders',component:MyOrdersComponent},
@@ -51,6 +52,8 @@ const routes: Routes = [
   { path: 'appointment-management', component: AppointmentManagementComponent },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'homepage', component: HomepageComponent},
+  {path: 'food/:id',component: FoodDetailsComponent},
+
 ];
 
 

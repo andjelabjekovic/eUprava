@@ -42,6 +42,13 @@ func main() {
 	router := mux.NewRouter()
 	router.Use(MiddlewareContentTypeSet)
 
+	router.PathPrefix("/uploads/").
+    Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads/"))))
+	
+	uploadFoodImage := router.Methods(http.MethodPost).Subrouter()
+uploadFoodImage.HandleFunc("/food/{id}/image", foodServiceHandler.UploadFoodImageHandler)
+
+
 	// Ruta za dobijanje liste hrane
 	getFoodList := router.Methods(http.MethodGet).Subrouter()
 	getFoodList.HandleFunc("/foods", foodServiceHandler.GetListFoodHandler)
@@ -160,13 +167,16 @@ func main() {
 
 func MiddlewareContentTypeSet(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, h *http.Request) {
-		//s.logger.Println("Method [", h.Method, "] - Hit path :", h.URL.Path)
-
-		rw.Header().Add("Content-Type", "application/json")
+		// NE setujemo Content-Type globalno (upload slike je multipart, a slike su image/*)
 		rw.Header().Set("X-Content-Type-Options", "nosniff")
 		rw.Header().Set("X-Frame-Options", "DENY")
-		rw.Header().Set("Content-Security-Policy", "script-src 'self' https://code.jquery.com https://cdn.jsdelivr.net https://www.google.com https://www.gstatic.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://code.jquery.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com 'unsafe-inline'; font-src 'self' https://code.jquery.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: https://code.jquery.com https://i.ibb.co;")
+		rw.Header().Set("Content-Security-Policy",
+			"script-src 'self' https://code.jquery.com https://cdn.jsdelivr.net https://www.google.com https://www.gstatic.com 'unsafe-inline' 'unsafe-eval'; "+
+				"style-src 'self' https://code.jquery.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com 'unsafe-inline'; "+
+				"font-src 'self' https://code.jquery.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; "+
+				"img-src 'self' data: https://code.jquery.com https://i.ibb.co;")
 
 		next.ServeHTTP(rw, h)
 	})
 }
+

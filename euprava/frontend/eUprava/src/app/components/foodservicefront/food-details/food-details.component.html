@@ -1,0 +1,12 @@
+<div class="details-container" *ngIf="!loading && food">
+  <img class="food-image" [src]="getImageSrc()" />
+
+  <h2>{{ food.foodName }}</h2>
+
+  <p><strong>Tip 1:</strong> {{ mapType1(food.type1) }}</p>
+  <p><strong>Tip 2:</strong> {{ mapType2(food.type2) }}</p>
+</div>
+
+<div *ngIf="loading" class="loading">
+  Učitavanje...
+</div>

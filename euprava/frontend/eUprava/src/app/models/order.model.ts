@@ -3,6 +3,8 @@ export interface OrderData {
   food: {
       id: string;
       foodName?: string;
+      type1?: string;
+     type2?: string;
   };
   userId?: string; // ID korisnika koji je kreirao porudžbinu
   statusO?: string; // Status porudžbine ('Prihvacena' ili 'Neprihvacena')

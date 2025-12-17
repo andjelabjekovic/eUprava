@@ -609,7 +609,23 @@ func (rr *FoodServiceRepo) GetListFood() ([]Food, error) {
     return &foods, nil
 }*/
 
+
+func (rr *FoodServiceRepo) UpdateFoodImagePath(r *http.Request, foodID primitive.ObjectID, imagePath string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	foodCollection := rr.getCollection("food")
+	_, err := foodCollection.UpdateOne(ctx,
+		bson.M{"_id": foodID},
+		bson.M{"$set": bson.M{"imagePath": imagePath}},
+	)
+	return err
+}
+
+
+
 // GetAllFood returns all food records from the 'food' collection.
+
 func (rr *FoodServiceRepo) GetAllFood() (*Foods, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

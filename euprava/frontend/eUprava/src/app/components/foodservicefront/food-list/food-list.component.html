@@ -8,17 +8,52 @@
   <table *ngIf="foods.length > 0" class="table">
     <thead>
       <tr>
+        <th>Slika</th>
         <th>Naziv</th>
+        <th>Tip 1</th>
+        <th>Tip 2</th>
         <th>Akcije</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let food of foods">
-        <td>{{ food.foodName }}</td>
-        <td>
-          <button class="btn-action" (click)="deleteFood(food.id!)">Delete</button>
-          <button class="btn-action" (click)="goToUpdate(food.id!)">Update</button>
+
+        <!-- SLIKA – klik vodi na detalje -->
+        <td class="img-col"
+            (click)="openDetails(food.id!)"
+            style="cursor:pointer">
+          <img
+            class="food-thumb"
+            [src]="getImageSrc(food)"
+            alt="Slika hrane"
+          />
         </td>
+
+        <!-- NAZIV – klik vodi na detalje -->
+        <td
+          (click)="openDetails(food.id!)"
+          style="cursor:pointer">
+          {{ food.foodName }}
+        </td>
+
+        <td>{{ mapType1(food.type1) }}</td>
+        <td>{{ mapType2(food.type2) }}</td>
+
+        <!-- AKCIJE – OSTAJU ISTE -->
+        <td>
+          <button
+            class="btn-action"
+            (click)="deleteFood(food.id!)">
+            Delete
+          </button>
+
+          <button
+            class="btn-action"
+            (click)="goToUpdate(food.id!)">
+            Update
+          </button>
+        </td>
+
       </tr>
     </tbody>
   </table>
