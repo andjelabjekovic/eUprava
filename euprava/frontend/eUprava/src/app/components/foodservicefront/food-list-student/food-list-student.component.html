@@ -12,40 +12,64 @@
         <th>Naziv</th>
         <th>Tip 1</th>
         <th>Tip 2</th>
+        <th>Ocena</th>
         <th>Akcija</th>
       </tr>
     </thead>
+
     <tbody>
       <tr *ngFor="let food of foods">
-
-        <!-- SLIKA – klik vodi na detalje -->
-        <td class="img-col"
-            (click)="openDetails(food.id!)"
-            style="cursor:pointer">
-          <img
-            class="food-thumb"
-            [src]="getImageSrc(food)"
-            alt="Slika hrane"
-          />
+        <td class="img-col" (click)="openDetails(food.id!)" style="cursor:pointer">
+          <img class="food-thumb" [src]="getImageSrc(food)" alt="Slika hrane" />
         </td>
 
-        <!-- NAZIV – klik vodi na detalje -->
-        <td
-          (click)="openDetails(food.id!)"
-          style="cursor:pointer">
+        <td (click)="openDetails(food.id!)" style="cursor:pointer">
           {{ food.foodName }}
         </td>
 
         <td>{{ mapType1(food.type1) }}</td>
         <td>{{ mapType2(food.type2) }}</td>
 
-        <!-- ORDER – OSTAVLJEN NETAKNUT -->
         <td>
-          <button (click)="orderFood(food.id!)">
-            Order
-          </button>
+          <!-- AVG stars (uvek) -->
+          <div class="stars-row">
+            <span class="stars-label">
+              {{ (summariesAvg[food.id!]?.avgRating || 0) | number:'1.1-1' }}
+              ({{ summariesAvg[food.id!]?.ratingCount || 0 }})
+            </span>
+
+            <div class="stars read-only">
+              <span *ngFor="let s of [1,2,3,4,5]; let i = index" class="star">
+                <span class="star-empty">★</span>
+                <span class="star-fill" [style.width.%]="getStarFillPercent((summariesAvg[food.id!]?.avgRating || 0), i)">★</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- YOUR rating (samo ako canReview) -->
+          <div class="your-rating" *ngIf="summariesUser[food.id!]?.canReview">
+            <span class="your-rating-label">Tvoja ocena:</span>
+
+            <div class="stars interactive"
+                 (mouseleave)="clearHover(food.id!)">
+              <span
+                *ngFor="let s of [1,2,3,4,5]; let i = index"
+                class="star pointer"
+                (mouseenter)="setHover(food.id!, i+1)"
+                (click)="setRating(food.id!, i+1)"
+              >
+                <span class="star-empty">★</span>
+                <span class="star-fill"
+                      [style.width.%]="getUserStarFillPercent(food.id!, i)"
+                >★</span>
+              </span>
+            </div>
+          </div>
         </td>
 
+        <td>
+          <button (click)="orderFood(food.id!)">Order</button>
+        </td>
       </tr>
     </tbody>
   </table>

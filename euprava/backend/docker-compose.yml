@@ -49,12 +49,15 @@ services:
       FOOD_DB_PORT: ${FOOD_DB_PORT}
       FOOD_SERVICE_PORT: ${FOOD_SERVICE_PORT}
       FOOD_SERVICE_HOST: ${FOOD_SERVICE_HOST}
+      SECRET_KEY: ${SECRET_KEY}
+      UPLOAD_DIR: /uploads
     depends_on:
       - food_db
     networks:
       - network
     volumes:
       - logs_volume:/logs
+      - food_uploads:/uploads
 
   api_gateway:
     build:
@@ -80,6 +83,7 @@ services:
     environment:
       - PORT=8080
       - MONGO_DB_URI=mongodb://root:pass@user_data_base:27017
+      - SECRET_KEY=${SECRET_KEY}
     depends_on:
       user_data_base:
         condition: service_healthy
@@ -124,6 +128,7 @@ services:
       - network
 
 volumes:
+  food_uploads:
   user_data_base:
   university_data_base:
   logs_volume:

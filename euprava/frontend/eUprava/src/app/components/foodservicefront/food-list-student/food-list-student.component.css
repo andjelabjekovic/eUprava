@@ -81,4 +81,56 @@ body {
     background-color: #dda0dd;
     cursor: not-allowed;
   }
-  
+  .stars-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stars-label {
+  font-size: 0.9rem;
+  color: #555;
+  white-space: nowrap;
+}
+
+.your-rating {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.your-rating-label {
+  font-size: 0.9rem;
+  color: #444;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 4px;
+  line-height: 1;
+}
+
+.star {
+  position: relative;
+  display: inline-block;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.pointer { cursor: pointer; }
+
+.star-empty { color: #ddd; }
+
+.star-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  color: #f7c948; /* zuta */
+  width: 0%;
+  white-space: nowrap;
+}

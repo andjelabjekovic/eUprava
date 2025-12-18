@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -158,34 +159,6 @@ func (rr *FoodServiceRepo) GetLoggedUser(r *http.Request) (*AuthUser, error) {
 	return &user, nil
 }
 
-/*
-	func (rr *FoodServiceRepo) GetAllOrdersForUser(userID primitive.ObjectID) ([]Order, error) {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-
-		ordersCollection := rr.getCollection("orders")
-
-		filter := bson.M{
-			"userId":   userID,
-			"statusO":  "Neprihvacena",
-			"statusO2": "Neotkazana",
-		}
-
-		cursor, err := ordersCollection.Find(ctx, filter)
-		if err != nil {
-			return nil, err
-		}
-		defer cursor.Close(ctx)
-
-		var orders []Order
-		if err := cursor.All(ctx, &orders); err != nil {
-			rr.logger.Println(err)
-			return nil, err
-		}
-
-		return orders, nil
-	}
-*/
 func (rr *FoodServiceRepo) GetMyOrders(userID primitive.ObjectID) (Orders, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -234,68 +207,6 @@ func (rr *FoodServiceRepo) CancelOrder(orderID primitive.ObjectID) error {
 	return nil
 }
 
-// GetAllMyOrders vraća porudžbine korisnika sa statusO='Prihvacena' i statusO2='Neotkazana'
-/*func (rr *FoodServiceRepo) GetAllMyOrders(userID primitive.ObjectID) ([]Order, error) {
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
-
-    orderCollection := rr.getCollection("order")
-
-    // Definišemo filter za dohvat porudžbina koje pripadaju korisniku i zadovoljavaju uslove statusa
-    filter := bson.M{
-        "userId":  userID,
-        "statusO": Prihvacena,
-        "statusO2": Neotkazana,
-    }
-
-    cursor, err := orderCollection.Find(ctx, filter)
-    if err != nil {
-        rr.logger.Println("Error finding user's accepted and not canceled orders:", err)
-        return nil, err
-    }
-    defer cursor.Close(ctx)
-
-    var orders []Order
-    err = cursor.All(ctx, &orders)
-    if err != nil {
-        rr.logger.Println("Error decoding orders:", err)
-        return nil, err
-    }
-
-    rr.logger.Printf("Fetched %d orders for user %s with statusO='Prihvacena' and statusO2='Neotkazana'\n", len(orders), userID.Hex())
-    return orders, nil
-}*/
-
-/*
-func (rr *FoodServiceRepo) CreateFoodEntry(r *http.Request, foodData *Food) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	// Automatski postavljanje dummy userID (možeš ovo kasnije zameniti sa stvarnim korisničkim ID-om)
-	dummyUserID := primitive.NewObjectID() // Generiše novi ObjectID
-	foodData.UserID = dummyUserID          // Postavi generisani ObjectID
-
-	// Postavi default stanje2 ako nije prosleđeno u telu zahteva
-	if foodData.Stanje2 == "" {
-		foodData.Stanje2 = Neprihvacena // Postavi default vrednost
-	}
-
-	// Loguj podatke pre umetanja
-	fmt.Printf("Inserting food data: %+v\n", foodData)
-
-	foodCollection := rr.getCollection("food")
-
-	// Umetanje u MongoDB
-	_, err := foodCollection.InsertOne(ctx, foodData)
-	if err != nil {
-		fmt.Println("Error inserting food data:", err) // Loguj grešku umetanja
-		return err
-	}
-
-	// Vraćanje odgovora sa podacima
-	// Pretpostavljamo da vraćaš samo foodData u odgovoru ili ga možeš modifikovati kako bi uključio userId
-	return nil
-}*/
 
 func (rr *FoodServiceRepo) UpdateFoodEntry(r *http.Request, foodID primitive.ObjectID, foodData *Food) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -517,44 +428,7 @@ func (rr *FoodServiceRepo) CreateOrderEntry(r *http.Request, orderData *Order) e
 	return nil
 }
 
-/*
-// metoda kreiranje porudzbine
-func (rr *FoodServiceRepo) CreateOrder(r *http.Request, orderData *Order) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 
-	// Automatski postavljanje dummy userID (možeš ovo kasnije zameniti sa stvarnim korisničkim ID-om)
-	dummyUserID := primitive.NewObjectID() // Generiše novi ObjectID
-	orderData.UserID = dummyUserID         // Postavi generisani ObjectID
-	foodId := orderData.Food.ID
-	// Postavi default stanje2 ako nije prosleđeno u telu zahteva
-	var food Food
-	orderData.StatusO = Neprihvacena // Postavi default vrednost
-	orderData.StatusO2 = StatusO2(Neotkazana)
-
-	// Loguj podatke pre umetanja
-	fmt.Printf("Inserting food data: %+v\n", orderData)
-
-	foodCollection := rr.getCollection("food")
-	orderCollection := rr.getCollection("order")
-	fillter := bson.M{"_id": foodId}
-	// Umetanje u MongoDB
-	err := foodCollection.FindOne(ctx, fillter).Decode(&food)
-	if err != nil {
-		fmt.Println("Error inserting food data:", err) // Loguj grešku umetanja
-		return err
-	}
-	orderData.Food = food
-	// Umetanje u MongoDB
-	_, err = orderCollection.InsertOne(ctx, orderData)
-	if err != nil {
-		fmt.Println("Error inserting food data:", err) // Loguj grešku umetanja
-		return err
-	}
-	// Vraćanje odgovora sa podacima
-	// Pretpostavljamo da vraćaš samo foodData u odgovoru ili ga možeš modifikovati kako bi uključio userId
-	return nil
-}*/
 
 // GetListFood vraća sve unose hrane iz baze, sa dummy korisnikom (nil)
 func (rr *FoodServiceRepo) GetListFood() ([]Food, error) {
@@ -582,32 +456,6 @@ func (rr *FoodServiceRepo) GetListFood() ([]Food, error) {
 
 	return foodList, nil
 }
-
-// GetAllFood vraća sve unose hrane iz baze podataka.
-/*func (rr *FoodServiceRepo) GetAllFood() (*Foods, error) {
-    ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
-    defer cancel()
-
-    foodCollection := rr.getCollection("food")
-
-    var foods Foods
-    cursor, err := foodCollection.Find(ctx, bson.M{})
-    if err != nil {
-        rr.logger.Println("Error fetching foods:", err)
-        return nil, err
-    }
-    defer cursor.Close(ctx)
-
-    if err = cursor.All(ctx, &foods); err != nil {
-        rr.logger.Println("Error decoding foods:", err)
-        return nil, err
-    }
-
-    // Dodaj log da vidiš koliko podataka je vraćeno
-    rr.logger.Printf("Fetched %d foods from database", len(foods))
-
-    return &foods, nil
-}*/
 
 
 func (rr *FoodServiceRepo) UpdateFoodImagePath(r *http.Request, foodID primitive.ObjectID, imagePath string) error {
@@ -651,51 +499,7 @@ func (rr *FoodServiceRepo) GetAllFood() (*Foods, error) {
 	return &foods, nil
 }
 
-/*func (rr *FoodServiceRepo) EditFood(id string, food *Food) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
-	defer cancel()
 
-	foodsCollection := rr.getCollection("foods")
-
-	rr.logger.Printf("Starting update for Food ID: %s", id)
-
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		rr.logger.Println("Error converting ID to ObjectID:", err)
-		return fmt.Errorf("Invalid ID format: %w", err)
-	}
-
-	rr.logger.Printf("Converted ID to ObjectID: %v", objectID)
-
-	if food.FoodName == "" {
-		rr.logger.Println("FoodName is empty, cannot proceed with update")
-		return fmt.Errorf("FoodName cannot be empty")
-	}
-
-	filter := bson.M{"_id": objectID}
-	update := bson.M{
-		"$set": bson.M{"foodName": food.FoodName},
-	}
-
-	rr.logger.Printf("Filter: %v, Update: %v", filter, update)
-
-	result, err := foodsCollection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		rr.logger.Println("Error during update:", err)
-		return err
-	}
-
-	rr.logger.Printf("Documents matched: %v", result.MatchedCount)
-	rr.logger.Printf("Documents updated: %v", result.ModifiedCount)
-
-	if result.MatchedCount == 0 {
-		rr.logger.Println("No documents matched the given ID.")
-		return fmt.Errorf("No documents found with the provided ID")
-	}
-
-	return nil
-}
-*/
 // edit
 
 func (rr *FoodServiceRepo) EditFood(id string, food *Food) error {
@@ -783,71 +587,6 @@ func GetCachedTherapies() Therapies {
 	return therapiesList
 }
 
-// funkcija dobavlja sve terapije iz Food servisa.
-/*func (rr *FoodServiceRepo) GetAllTherapiesFromFoodService() (Therapies, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
-	defer cancel()
-
-	therapiesCollection := rr.cli.Database("MongoDatabase").Collection("therapies")
-
-	var therapies Therapies
-	cursor, err := therapiesCollection.Find(ctx, bson.M{})
-	if err != nil {
-		rr.logger.Println(err)
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	if err := cursor.All(ctx, &therapies); err != nil {
-		rr.logger.Println(err)
-		return nil, err
-	}
-
-	return therapies, nil
-}
-*/
-/*func (rr *FoodServiceRepo) GetAllTherapiesFromFoodService() (Therapies, error) {
-    // 1. Loguj ulazak u funkciju
-    rr.logger.Println("Entering GetAllTherapiesFromFoodService")
-
-    // 2. Kreiraj novi kontekst sa timeout-om
-    rr.logger.Println("Creating context with 50 second timeout")
-    ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
-    defer cancel()
-
-    // 3. Dobavi kolekciju 'therapies' iz baze 'MongoDatabase'
-    rr.logger.Println("Retrieving 'therapies' collection from the 'MongoDatabase'")
-    therapiesCollection := rr.cli.Database("MongoDatabase").Collection("therapies")
-
-    // 4. Upit koji pronalazi sve dokumente
-    rr.logger.Println("Finding all therapies in the database...")
-    cursor, err := therapiesCollection.Find(ctx, bson.M{})
-    if err != nil {
-        rr.logger.Printf("Error occurred while trying to find therapies: %v\n", err)
-        return nil, err
-    }
-    defer func() {
-        rr.logger.Println("Closing cursor")
-        cursor.Close(ctx)
-    }()
-
-    rr.logger.Println("Successfully retrieved cursor from the database")
-
-    // 5. Učitaj sve rezultate iz kursora u strukturu `therapies`
-    var therapies Therapies
-    rr.logger.Println("Reading all documents from cursor into 'therapies'")
-    if err := cursor.All(ctx, &therapies); err != nil {
-        rr.logger.Printf("Error occurred while decoding cursor result: %v\n", err)
-        return nil, err
-    }
-
-    rr.logger.Printf("Successfully retrieved therapies: %+v\n", therapies)
-
-    // 6. Loguj izlazak iz funkcije
-    rr.logger.Println("Leaving GetAllTherapiesFromFoodService")
-
-    return therapies, nil
-}*/
 func (rr *FoodServiceRepo) GetAllTherapiesFromFoodService() (Therapies, error) {
 	rr.logger.Println("[res-store] Entering GetAllTherapiesFromFoodService")
 
@@ -1022,4 +761,288 @@ func (rr *FoodServiceRepo) GetAllTherapiesFromHealthCareService() (Therapies, er
 
 func (rr *FoodServiceRepo) getCollection(collectionName string) *mongo.Collection {
 	return rr.cli.Database("MongoDatabase").Collection(collectionName)
+}
+// ===== REVIEWS / RATINGS / COMMENTS =====
+
+func (rr *FoodServiceRepo) EnsureReviewIndexes() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	ratings := rr.getCollection("ratings")
+	comments := rr.getCollection("comments")
+
+	// Unique (foodId, userId) for rating per user per food
+	_, err := ratings.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: bson.D{{Key: "foodId", Value: 1}, {Key: "userId", Value: 1}},
+		Options: options.Index().SetUnique(true).SetName("uniq_food_user_rating"),
+	})
+	if err != nil {
+		return err
+	}
+
+	// For comments: by food and createdAt
+	_, err = comments.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: bson.D{{Key: "foodId", Value: 1}, {Key: "createdAt", Value: -1}},
+		Options: options.Index().SetName("comments_by_food_createdAt"),
+	})
+	return err
+}
+
+// HasUserOrderedFood checks if user ordered this food at least once (optionally not cancelled)
+func (rr *FoodServiceRepo) HasUserOrderedFood(userID primitive.ObjectID, foodID primitive.ObjectID) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	orders := rr.getCollection("order")
+
+	filter := bson.M{
+		"userId":    userID,
+		"food._id":  foodID,
+		// ako želiš striktno: samo neotkazane:
+		// "statusO2": Neotkazana,
+	}
+
+	err := orders.FindOne(ctx, filter).Err()
+	if err == mongo.ErrNoDocuments {
+		return false, nil
+	}
+	return err == nil, err
+}
+
+func (rr *FoodServiceRepo) UpsertRating(foodID, userID primitive.ObjectID, rating int) error {
+	if rating < 1 || rating > 5 {
+		return errors.New("rating must be 1..5")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	ratingsCol := rr.getCollection("ratings")
+	now := time.Now()
+
+	filter := bson.M{"foodId": foodID, "userId": userID}
+	update := bson.M{
+		"$set": bson.M{
+			"rating":    rating,
+			"updatedAt": now,
+		},
+		"$setOnInsert": bson.M{
+			"foodId":    foodID,
+			"userId":    userID,
+			"createdAt": now,
+		},
+	}
+
+	_, err := ratingsCol.UpdateOne(ctx, filter, update, options.Update().SetUpsert(true))
+	return err
+}
+
+func (rr *FoodServiceRepo) GetMyRating(foodID, userID primitive.ObjectID) (int, bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	ratingsCol := rr.getCollection("ratings")
+	var rdoc Rating
+	err := ratingsCol.FindOne(ctx, bson.M{"foodId": foodID, "userId": userID}).Decode(&rdoc)
+	if err == mongo.ErrNoDocuments {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, false, err
+	}
+	return rdoc.Rating, true, nil
+}
+
+func (rr *FoodServiceRepo) AddComment(foodID, userID primitive.ObjectID, author string, text string) error {
+	text = strings.TrimSpace(text)
+	if text == "" || len(text) > 1000 {
+		return errors.New("comment text invalid")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	commentsCol := rr.getCollection("comments")
+
+	doc := Comment{
+		ID:        primitive.NewObjectID(),
+		FoodID:    foodID,
+		UserID:    userID,
+		Author:    author,
+		Text:      text,
+		CreatedAt: time.Now(),
+	}
+
+	_, err := commentsCol.InsertOne(ctx, doc)
+	return err
+}
+
+func (rr *FoodServiceRepo) ListComments(foodID primitive.ObjectID, limit int64) ([]Comment, error) {
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	commentsCol := rr.getCollection("comments")
+
+	cur, err := commentsCol.Find(ctx, bson.M{"foodId": foodID},
+		options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}}).SetLimit(limit),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	out := make([]Comment, 0)
+	for cur.Next(ctx) {
+		var c Comment
+		if err := cur.Decode(&c); err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, cur.Err()
+}
+func (rr *FoodServiceRepo) GetSummary(foodID primitive.ObjectID) (avg float64, ratingCount int64, commentCount int64, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	ratingsCol := rr.getCollection("ratings")
+	commentsCol := rr.getCollection("comments")
+
+	// ratings aggregation (cast rating -> double da ne puca ako je nekad string)
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.M{"foodId": foodID}}},
+		bson.D{{Key: "$project", Value: bson.M{
+			"foodId": 1,
+			"ratingNum": bson.M{"$toDouble": "$rating"},
+		}}},
+		bson.D{{Key: "$group", Value: bson.M{
+			"_id":         "$foodId",
+			"avgRating":   bson.M{"$avg": "$ratingNum"},
+			"ratingCount": bson.M{"$sum": 1},
+		}}},
+	}
+
+	cur, err := ratingsCol.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	defer cur.Close(ctx)
+
+	type row struct {
+		AvgRating   float64 `bson:"avgRating"`
+		RatingCount int64   `bson:"ratingCount"`
+	}
+
+	if cur.Next(ctx) {
+		var r row
+		if err := cur.Decode(&r); err != nil {
+			return 0, 0, 0, err
+		}
+		avg = r.AvgRating
+		ratingCount = r.RatingCount
+	} else {
+		avg = 0
+		ratingCount = 0
+	}
+
+	// comment count
+	commentCount, err = commentsCol.CountDocuments(ctx, bson.M{"foodId": foodID})
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	return avg, ratingCount, commentCount, nil
+}
+
+
+func (rr *FoodServiceRepo) GetBatchSummaries(foodIDs []primitive.ObjectID) (map[primitive.ObjectID]ReviewSummary, error) {
+	out := make(map[primitive.ObjectID]ReviewSummary)
+	if len(foodIDs) == 0 {
+		return out, nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	ratingsCol := rr.getCollection("ratings")
+	commentsCol := rr.getCollection("comments")
+
+	// ratings
+	p1 := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"foodId": bson.M{"$in": foodIDs}}}},
+		{{Key: "$group", Value: bson.M{
+			"_id":         "$foodId",
+			"avgRating":   bson.M{"$avg": "$rating"},
+			"ratingCount": bson.M{"$sum": 1},
+		}}},
+	}
+	cur, err := ratingsCol.Aggregate(ctx, p1)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	type rRow struct {
+		ID          primitive.ObjectID `bson:"_id"`
+		AvgRating   float64            `bson:"avgRating"`
+		RatingCount int64              `bson:"ratingCount"`
+	}
+	for cur.Next(ctx) {
+		var rrw rRow
+		if err := cur.Decode(&rrw); err != nil {
+			return nil, err
+		}
+		out[rrw.ID] = ReviewSummary{
+			FoodID:      rrw.ID,
+			AvgRating:   rrw.AvgRating,
+			RatingCount: rrw.RatingCount,
+		}
+	}
+	if err := cur.Err(); err != nil {
+		return nil, err
+	}
+
+	// comment counts
+	p2 := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"foodId": bson.M{"$in": foodIDs}}}},
+		{{Key: "$group", Value: bson.M{
+			"_id":          "$foodId",
+			"commentCount": bson.M{"$sum": 1},
+		}}},
+	}
+	cur2, err := commentsCol.Aggregate(ctx, p2)
+	if err != nil {
+		return nil, err
+	}
+	defer cur2.Close(ctx)
+
+	type cRow struct {
+		ID           primitive.ObjectID `bson:"_id"`
+		CommentCount int64              `bson:"commentCount"`
+	}
+	for cur2.Next(ctx) {
+		var cr cRow
+		if err := cur2.Decode(&cr); err != nil {
+			return nil, err
+		}
+		s := out[cr.ID]
+		s.FoodID = cr.ID
+		s.CommentCount = cr.CommentCount
+		out[cr.ID] = s
+	}
+	if err := cur2.Err(); err != nil {
+		return nil, err
+	}
+
+	// fill missing
+	for _, fid := range foodIDs {
+		if _, ok := out[fid]; !ok {
+			out[fid] = ReviewSummary{FoodID: fid}
+		}
+	}
+	return out, nil
 }

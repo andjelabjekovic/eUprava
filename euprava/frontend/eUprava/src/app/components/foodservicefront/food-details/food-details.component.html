@@ -5,6 +5,35 @@
 
   <p><strong>Tip 1:</strong> {{ mapType1(food.type1) }}</p>
   <p><strong>Tip 2:</strong> {{ mapType2(food.type2) }}</p>
+
+  <div class="review-summary" *ngIf="summary">
+    <h3>Recenzije</h3>
+    <p><strong>Prosek ocena:</strong> {{ summary.avgRating | number:'1.1-1' }}</p>
+    <p><strong>Broj ocena:</strong> {{ summary.ratingCount }}</p>
+    <p><strong>Broj komentara:</strong> {{ summary.commentCount }}</p>
+  </div>
+
+  <div class="comments-block">
+    <h3>Komentari</h3>
+
+    <div *ngIf="comments.length === 0" class="muted">
+      Nema komentara.
+    </div>
+
+    <div *ngFor="let c of comments" class="comment">
+      <div class="comment-author">{{ c.author }}</div>
+      <div class="comment-text">{{ c.text }}</div>
+    </div>
+  </div>
+
+  <!-- student: comment box only if canReview -->
+  <div class="add-comment" *ngIf="canStudentComment">
+    <h4>Dodaj komentar</h4>
+    <textarea [(ngModel)]="commentText" rows="3" placeholder="Napiši komentar..."></textarea>
+    <button (click)="addComment()" [disabled]="sendingComment || !commentText.trim()">
+      {{ sendingComment ? 'Šaljem...' : 'Pošalji' }}
+    </button>
+  </div>
 </div>
 
 <div *ngIf="loading" class="loading">

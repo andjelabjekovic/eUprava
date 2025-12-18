@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"food-service/data"
 	"food-service/handlers"
+	"food-service/middleware"
 	"log"
 	"net/http"
 	"os"
@@ -24,11 +25,11 @@ func main() {
 	timeoutContext, cancel := context.WithTimeout(context.Background(), 50*time.Second)
 	defer cancel()
 
-	// Inicijalizacija loggera koji Ä‡e se koristiti, sa prefiksom i datumom za svaki log
+	// Inicijalizacija loggera
 	logger := log.New(os.Stdout, "[res-api] ", log.LstdFlags)
 	storeLogger := log.New(os.Stdout, "[res-store] ", log.LstdFlags)
 
-	// NoSQL: Inicijalizacija prodavnice proizvoda
+	// Repo
 	store, err := data.NewFoodServiceRepo(timeoutContext, storeLogger)
 	if err != nil {
 		logger.Fatal(err)
@@ -36,54 +37,64 @@ func main() {
 	defer store.DisconnectMongo(timeoutContext)
 	store.Ping()
 
+	// ✅ REVIEWS: indeksi
+	if err := store.EnsureReviewIndexes(); err != nil {
+		logger.Println("Warning: cannot ensure review indexes:", err)
+	}
+
 	foodServiceHandler := handlers.NewFoodServiceHandler(logger, store)
 
-	// Inicijalizacija rutera i dodavanje middleware-a za sve zahteve
+	// Router + middleware
 	router := mux.NewRouter()
 	router.Use(MiddlewareContentTypeSet)
+uploadDir := os.Getenv("UPLOAD_DIR")
+if uploadDir == "" {
+    uploadDir = "./uploads"
+}
 
-	router.PathPrefix("/uploads/").
-    Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads/"))))
-	
+if err := os.MkdirAll(uploadDir, 0755); err != nil {
+    logger.Fatal("Cannot create upload dir:", err)
+}
+
+router.PathPrefix("/uploads/").
+  Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("/uploads/"))))
+
+
+
 	uploadFoodImage := router.Methods(http.MethodPost).Subrouter()
-uploadFoodImage.HandleFunc("/food/{id}/image", foodServiceHandler.UploadFoodImageHandler)
+	uploadFoodImage.HandleFunc("/food/{id}/image", foodServiceHandler.UploadFoodImageHandler)
 
-
-	// Ruta za dobijanje liste hrane
+	// Foods
 	getFoodList := router.Methods(http.MethodGet).Subrouter()
 	getFoodList.HandleFunc("/foods", foodServiceHandler.GetListFoodHandler)
 
 	getFood := router.Methods(http.MethodGet).Subrouter()
 	getFood.HandleFunc("/food/{id}", foodServiceHandler.GetFoodByIDHandler)
 
-	// Kreiranje novog unosa hrane(radi)
 	createFood := router.Methods(http.MethodPost).Subrouter()
 	createFood.HandleFunc("/food", foodServiceHandler.CreateFoodHandler)
 	createFood.Use(foodServiceHandler.MiddlewareFoodDeserialization)
 
+	updateFood := router.Methods(http.MethodPut).Subrouter()
+	updateFood.HandleFunc("/food/{id}", foodServiceHandler.UpdateFoodHandler)
+	updateFood.Use(foodServiceHandler.MiddlewareFoodDeserialization)
+
+	deleteFoodEntry := router.Methods(http.MethodDelete).Subrouter()
+	deleteFoodEntry.HandleFunc("/food/{id}", foodServiceHandler.DeleteFoodHandler)
+
+	getAllFood := router.Methods(http.MethodGet).Subrouter()
+	getAllFood.HandleFunc("/food", foodServiceHandler.GetAllFood)
+
+	// Orders
 	cancelOrder := router.Methods(http.MethodPut).Subrouter()
 	cancelOrder.HandleFunc("/order/{id}/cancel", foodServiceHandler.CancelOrderHandler)
 
 	getMyOrders := router.Methods(http.MethodGet).Subrouter()
 	getMyOrders.HandleFunc("/my-orders", foodServiceHandler.GetMyOrdersHandler)
 
-	//my orders
-	//getMyOrders := router.Methods(http.MethodGet).Subrouter()
-	//getMyOrders.HandleFunc("/order/my", foodServiceHandler.GetAllOrdersForUser)
-
-	//getMyOrders := router.Methods(http.MethodGet).Subrouter()
-	//getMyOrders.HandleFunc("/my-orders", foodServiceHandler.GetAllOrdersForUser)
-
-	//router.HandleFunc("/my-orders", foodServiceHandler.GetAllOrdersForUser).Methods(http.MethodGet)
-
 	getAllOrders := router.Methods(http.MethodGet).Subrouter()
 	getAllOrders.HandleFunc("/order", foodServiceHandler.GetAllOrdersHandler)
 
-	// Dohvatanje porudžbina ulogovanog korisnika sa statusO='Prihvacena' i statusO2='Neotkazana'
-	//getMyOrders := router.Methods(http.MethodGet).Subrouter()
-	//getMyOrders.HandleFunc("/my-orders", foodServiceHandler.GetAllMyOrdersHandler)
-
-	// Dohvatanje prihvaćenih porudžbina
 	getAcceptedOrders := router.Methods(http.MethodGet).Subrouter()
 	getAcceptedOrders.HandleFunc("/accepted-orders", foodServiceHandler.GetAcceptedOrdersHandler)
 
@@ -93,22 +104,11 @@ uploadFoodImage.HandleFunc("/food/{id}/image", foodServiceHandler.UploadFoodImag
 
 	updateOrderStatus := router.Methods(http.MethodPut).Subrouter()
 	updateOrderStatus.HandleFunc("/order/{id}", foodServiceHandler.UpdateOrderStatusHandler)
-	// Update postojeće hrane
-	updateFood := router.Methods(http.MethodPut).Subrouter()
-	updateFood.HandleFunc("/food/{id}", foodServiceHandler.UpdateFoodHandler)
-	updateFood.Use(foodServiceHandler.MiddlewareFoodDeserialization)
 
-	// Brisanje unosa hrane
-	deleteFoodEntry := router.Methods(http.MethodDelete).Subrouter()
-	deleteFoodEntry.HandleFunc("/food/{id}", foodServiceHandler.DeleteFoodHandler)
-
-	// Ruta za dobijanje liste hrane(radi)
-	getAllFood := router.Methods(http.MethodGet).Subrouter()
-	getAllFood.HandleFunc("/food", foodServiceHandler.GetAllFood)
-
+	// Students food / edit legacy
 	getAllFoodForStudents := router.Methods(http.MethodGet).Subrouter()
 	getAllFoodForStudents.HandleFunc("/studentsfood", foodServiceHandler.GetAllFoodOfStudents)
-	//edit
+
 	editFood := router.Methods(http.MethodPost).Subrouter()
 	editFood.HandleFunc("/foods/{id}", foodServiceHandler.EditFood)
 	editFood.Use(foodServiceHandler.MiddlewareFoodDeserialization)
@@ -117,9 +117,9 @@ uploadFoodImage.HandleFunc("/food/{id}/image", foodServiceHandler.UploadFoodImag
 	editFoodForStudent.HandleFunc("/studentsfood", foodServiceHandler.EditFoodForStudent)
 	editFoodForStudent.Use(foodServiceHandler.MiddlewareStudentDeserialization)
 
+	// Therapies
 	getTherapies := router.Methods(http.MethodGet).Subrouter()
 	getTherapies.HandleFunc("/therapies", foodServiceHandler.GetTherapies)
-
 
 	editTherapy := router.Methods(http.MethodPut).Subrouter()
 	editTherapy.HandleFunc("/therapy/{therapyId}/approve", foodServiceHandler.ApproveTherapy)
@@ -135,7 +135,34 @@ uploadFoodImage.HandleFunc("/food/{id}/image", foodServiceHandler.UploadFoodImag
 	updateTherapyStatus := router.Methods(http.MethodPut).Subrouter()
 	updateTherapyStatus.HandleFunc("/therapy/{id}", foodServiceHandler.UpdateTherapyStatus)
 
-	// Inicijalizacija HTTP servera
+	// =========================
+	// ✅ REVIEWS ROUTES (ALL IN MAIN)
+	// =========================
+
+	// GET summary (optional auth if you want CanReview/MyRating enriched)
+	getReviewSummary := router.Methods(http.MethodGet).Subrouter()
+	getReviewSummary.Use(middleware.AuthRequired) // <- skini ovu liniju ako hoćeš da radi i bez tokena
+	getReviewSummary.HandleFunc("/food/{id}/reviews/summary", foodServiceHandler.GetFoodReviewSummary)
+
+	// POST rating (must be auth + student)
+	setRating := router.Methods(http.MethodPost).Subrouter()
+	setRating.Use(middleware.AuthRequired)
+	setRating.HandleFunc("/food/{id}/reviews/rating", foodServiceHandler.SetFoodRating)
+
+	// GET comments (public)
+	listComments := router.Methods(http.MethodGet).Subrouter()
+	listComments.HandleFunc("/food/{id}/reviews/comments", foodServiceHandler.ListFoodComments)
+
+	// POST comment (must be auth + student)
+	addComment := router.Methods(http.MethodPost).Subrouter()
+	addComment.Use(middleware.AuthRequired)
+	addComment.HandleFunc("/food/{id}/reviews/comments", foodServiceHandler.AddFoodComment)
+
+	// Batch summaries for food list
+	batchSummaries := router.Methods(http.MethodPost).Subrouter()
+	batchSummaries.HandleFunc("/foods/reviews/summaries", foodServiceHandler.BatchFoodSummaries)
+
+	// Server
 	server := http.Server{
 		Addr:         ":" + port,
 		Handler:      router,
@@ -167,7 +194,6 @@ uploadFoodImage.HandleFunc("/food/{id}/image", foodServiceHandler.UploadFoodImag
 
 func MiddlewareContentTypeSet(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, h *http.Request) {
-		// NE setujemo Content-Type globalno (upload slike je multipart, a slike su image/*)
 		rw.Header().Set("X-Content-Type-Options", "nosniff")
 		rw.Header().Set("X-Frame-Options", "DENY")
 		rw.Header().Set("Content-Security-Policy",
@@ -179,4 +205,3 @@ func MiddlewareContentTypeSet(next http.Handler) http.Handler {
 		next.ServeHTTP(rw, h)
 	})
 }
-
