@@ -12,6 +12,7 @@ import { environment } from 'src/app/environments/environment';
 export class FoodListComponent implements OnInit {
 
   foods: FoodData[] = [];
+  displayFoods: FoodData[] = []; // ✅ NOVO: lista za prikaz (sortirana)
   summaries: Record<string, ReviewSummary> = {};
 
   constructor(private foodService: FoodService, private router: Router) {}
@@ -24,6 +25,7 @@ export class FoodListComponent implements OnInit {
     this.foodService.getAllFoods().subscribe(
       (data: FoodData[]) => {
         this.foods = data;
+        this.displayFoods = [...this.foods]; // privremeno, dok ne stignu summaries
         this.loadSummariesBatch();
       },
       error => console.error('Greška prilikom preuzimanja hrane:', error)
@@ -32,12 +34,53 @@ export class FoodListComponent implements OnInit {
 
   private loadSummariesBatch(): void {
     const ids = this.foods.map(f => f.id!).filter(Boolean);
-    if (ids.length === 0) return;
+    if (ids.length === 0) {
+      this.summaries = {};
+      this.applyCookSort();
+      return;
+    }
 
     this.foodService.batchFoodSummaries(ids).subscribe({
-      next: (map) => this.summaries = map || {},
-      error: () => this.summaries = {}
+      next: (map) => {
+        this.summaries = map || {};
+        this.applyCookSort(); // ✅ NOVO: sortiraj tek kad stignu avg/count
+      },
+      error: () => {
+        this.summaries = {};
+        this.applyCookSort();
+      }
     });
+  }
+
+  // ✅ NOVO: Kuvar vidi prvo bez recenzija, pa najmanji prosek, pa najveći
+  private applyCookSort(): void {
+    const list = [...this.foods];
+
+    list.sort((a, b) => {
+      const sa = a.id ? this.summaries[a.id] : undefined;
+      const sb = b.id ? this.summaries[b.id] : undefined;
+
+      const countA = sa?.ratingCount ?? 0;
+      const countB = sb?.ratingCount ?? 0;
+
+      // 1) bez recenzija ide prvo
+      const noReviewsA = countA === 0;
+      const noReviewsB = countB === 0;
+      if (noReviewsA && !noReviewsB) return -1;
+      if (!noReviewsA && noReviewsB) return 1;
+
+      // 2) oba imaju recenzije => avg rastuće
+      const avgA = sa?.avgRating ?? 0;
+      const avgB = sb?.avgRating ?? 0;
+      if (avgA !== avgB) return avgA - avgB;
+
+      // 3) tie-break: manje ocena prvo, pa po imenu (stabilnije)
+      if (countA !== countB) return countA - countB;
+
+      return (a.foodName || '').localeCompare(b.foodName || '');
+    });
+
+    this.displayFoods = list;
   }
 
   deleteFood(foodId: string): void {
@@ -45,6 +88,7 @@ export class FoodListComponent implements OnInit {
       () => {
         this.foods = this.foods.filter(food => food.id !== foodId);
         delete this.summaries[foodId];
+        this.applyCookSort(); // ✅ NOVO: osveži prikaz posle brisanja
       },
       error => console.error('Greška prilikom brisanja hrane:', error)
     );
@@ -86,6 +130,6 @@ export class FoodListComponent implements OnInit {
     const diff = avg - (starNumber - 1);
     if (diff <= 0) return 0;
     if (diff >= 1) return 100;
-    return Math.round(diff * 100); // e.g. 0.5 => 50
+    return Math.round(diff * 100);
   }
 }

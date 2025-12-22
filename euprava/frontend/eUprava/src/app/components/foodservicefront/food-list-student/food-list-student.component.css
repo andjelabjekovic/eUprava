@@ -1,22 +1,22 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #ffe4e1;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-  }
-  .img-col {
+  font-family: Arial, sans-serif;
+  background-color: #ffe4e1;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.img-col {
   width: 70px;
 }
 
 .clickable {
   cursor: pointer;
 }
-
 
 .food-thumb {
   width: 55px;
@@ -27,61 +27,62 @@ body {
   background-color: #fff;
 }
 
-  .my-orders-container {
-    width: 95%;
-    max-width: 650px;
-    background-color: #fff0f5;
-    border-radius: 15px;
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-    padding: 30px;
-    text-align: center;
-    margin: auto;
-  }
-  
-  h2 {
-    font-size: 2rem;
-    margin-bottom: 25px;
-    color: #d87093;
-  }
-  
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-  }
-  
-  .table th, .table td {
-    padding: 12px 15px;
-    text-align: left;
-    border: 1px solid #ddd;
-    background-color: #ffe4e1;
-  }
-  
-  .table th {
-    background-color: #d87093;
-    color: #ffffff;
-  }
-  
-  button {
-    margin-top: 5px;
-    padding: 10px 15px;
-    font-size: 1rem;
-    color: #ffffff;
-    background-color: #d87093;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  
-  button:hover {
-    background-color: #c06085;
-  }
-  
-  button:disabled {
-    background-color: #dda0dd;
-    cursor: not-allowed;
-  }
-  .stars-row {
+.my-orders-container {
+  width: 95%;
+  max-width: 650px;
+  background-color: #fff0f5;
+  border-radius: 15px;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  text-align: center;
+  margin: auto;
+}
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 25px;
+  color: #d87093;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.table th, .table td {
+  padding: 12px 15px;
+  text-align: left;
+  border: 1px solid #ddd;
+  background-color: #ffe4e1;
+}
+
+.table th {
+  background-color: #d87093;
+  color: #ffffff;
+}
+
+button {
+  margin-top: 5px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  color: #ffffff;
+  background-color: #d87093;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #c06085;
+}
+
+button:disabled {
+  background-color: #dda0dd;
+  cursor: not-allowed;
+}
+
+.stars-row {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -133,4 +134,40 @@ body {
   color: #f7c948; /* zuta */
   width: 0%;
   white-space: nowrap;
+}
+
+/* ✅ NOVO: layout za oba filtera (Tip1 + Tip2) */
+.filters-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0 16px;
+  text-align: left;
+}
+
+.filter-group {
+  background: rgba(255, 228, 225, 0.55);
+  border: 1px solid #f2c7cf;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.filter-title {
+  font-weight: 700;
+  color: #c06085;
+  margin-bottom: 8px;
+}
+
+.type-filter {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-option {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
 }

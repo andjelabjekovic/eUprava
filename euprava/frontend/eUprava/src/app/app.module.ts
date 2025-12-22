@@ -17,6 +17,7 @@ import { StudentAppointmentListComponent } from './components/student-appointmen
 import { StudentCancelAppointmentListComponent } from './components/student-cancel-appointment-list/student-cancel-appointment-list.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 
+
 import { CreateFoodComponent } from './components/foodservicefront/therapy-list/create-food.component';
 
 import {LoginComponent} from "./components/login/login.component";
@@ -55,7 +56,7 @@ import { FoodDetailsComponent } from './components/foodservicefront/food-details
     UpdateFoodComponent,
     HomeRadnikComponent,
    
-
+    
 
     HomepageComponent,
     FoodListComponent,
@@ -77,6 +78,7 @@ import { FoodDetailsComponent } from './components/foodservicefront/food-details
     CommonModule,
     NavbarComponent,
     LoginComponent,
+    
     RegisterComponent
   ],
   providers: [],

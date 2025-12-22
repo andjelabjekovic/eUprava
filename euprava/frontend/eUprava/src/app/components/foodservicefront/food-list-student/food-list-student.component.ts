@@ -17,14 +17,15 @@ import { environment } from 'src/app/environments/environment';
 export class FoodListStudentComponent implements OnInit {
 
   foods: FoodData[] = [];
+  displayFoods: FoodData[] = [];
 
-  // avg/counts za sve
+  // ✅ oba default: ALL (Sve)
+  selectedType2: 'ALL' | 'POSNO' | 'MRSNO' = 'ALL';
+  selectedType1: 'ALL' | 'PASTA' | 'PICA' | 'SALATA' = 'ALL';
+
   summariesAvg: Record<string, ReviewSummary> = {};
-
-  // canReview + myRating (po studentu) — dolazi iz GET summary uz auth
   summariesUser: Record<string, ReviewSummary> = {};
 
-  // hover stanje po foodId
   hoverByFood: Record<string, number> = {};
 
   constructor(
@@ -41,11 +42,27 @@ export class FoodListStudentComponent implements OnInit {
     this.foodService.getAllFoods().subscribe(
       (data: FoodData[]) => {
         this.foods = data;
+        this.applyFilter();      // inicijalno (ALL+ALL)
         this.loadAvgBatch();
-        this.loadUserSummaries(); // da dobijemo canReview + myRating
+        this.loadUserSummaries();
       },
       error => console.error('Greška prilikom preuzimanja hrane:', error)
     );
+  }
+
+  // ✅ Filter: Tip1 AND Tip2
+  applyFilter(): void {
+    let list = [...this.foods];
+
+    if (this.selectedType1 !== 'ALL') {
+      list = list.filter(f => f.type1 === this.selectedType1);
+    }
+
+    if (this.selectedType2 !== 'ALL') {
+      list = list.filter(f => f.type2 === this.selectedType2);
+    }
+
+    this.displayFoods = list;
   }
 
   private loadAvgBatch(): void {
@@ -59,7 +76,6 @@ export class FoodListStudentComponent implements OnInit {
   }
 
   private loadUserSummaries(): void {
-    // ovde moramo per-food, jer batch endpoint ne vraća canReview/myRating
     const ids = this.foods.map(f => f.id!).filter(Boolean);
     if (ids.length === 0) return;
 
@@ -73,17 +89,11 @@ export class FoodListStudentComponent implements OnInit {
       const map: Record<string, ReviewSummary> = {};
       results.forEach((s) => {
         if (!s || !s.foodId) return;
-        // foodId sa backa može biti hex ili object-> ali mi mapiramo po url param id,
-        // zato uzimamo key iz s.foodId ako je string, a ako nije — preskoči
-        // (u praksi ti je string)
         map[s.foodId] = s;
       });
 
-      // Ako backend vrati foodId kao ObjectId JSON (nije slučaj kod tebe),
-      // fallback: pozovi još jednom mapiranje preko ids:
       ids.forEach((id) => {
         if (!map[id]) {
-          // ako nije stiglo — set default
           map[id] = { foodId: id, avgRating: 0, ratingCount: 0, commentCount: 0, canReview: false, myRating: 0 };
         }
       });
@@ -105,7 +115,7 @@ export class FoodListStudentComponent implements OnInit {
       () => {
         alert('Porudžbina je uspešno kreirana!');
         this.router.navigate(['/my-orders']);
-        // posle porudžbine, može da postane canReview=true:
+
         this.foodService.getFoodReviewSummary(foodId).subscribe({
           next: (s) => {
             if (s?.foodId) this.summariesUser[s.foodId] = s;
@@ -174,8 +184,8 @@ export class FoodListStudentComponent implements OnInit {
   }
 
   setRating(foodId: string, rating: number): void {
-    // optimistic UI
     const prev = this.summariesUser[foodId]?.myRating || 0;
+
     if (!this.summariesUser[foodId]) {
       this.summariesUser[foodId] = { foodId, avgRating: 0, ratingCount: 0, commentCount: 0, canReview: true, myRating: rating };
     } else {
@@ -184,8 +194,6 @@ export class FoodListStudentComponent implements OnInit {
 
     this.foodService.setFoodRating(foodId, rating).subscribe({
       next: (summaryFromBackend) => {
-        // backend vraća osvežen summary (avg/ratingCount/commentCount + myRating)
-        // ažuriraj avg map:
         this.summariesAvg[foodId] = {
           foodId,
           avgRating: summaryFromBackend.avgRating,
@@ -193,7 +201,6 @@ export class FoodListStudentComponent implements OnInit {
           commentCount: summaryFromBackend.commentCount
         };
 
-        // i user map:
         this.summariesUser[foodId] = {
           ...this.summariesUser[foodId],
           canReview: true,
@@ -201,7 +208,6 @@ export class FoodListStudentComponent implements OnInit {
         };
       },
       error: () => {
-        // rollback
         if (this.summariesUser[foodId]) this.summariesUser[foodId].myRating = prev;
         alert('Ne možeš da oceniš (ili nisi poručila ovu hranu).');
       }

@@ -1,11 +1,107 @@
 <div class="my-orders-container">
   <h2>Dostupna Hrana</h2>
 
-  <div *ngIf="foods.length === 0">
+  <!-- FILTERI: Tip2 + Tip1 (AND) -->
+  <div class="filters-wrap">
+
+    <!-- Tip 2 -->
+    <div class="filter-group">
+      <div class="filter-title">Tip 2</div>
+
+      <div class="type-filter">
+        <label class="filter-option">
+          <input
+            type="radio"
+            name="type2"
+            [value]="'ALL'"
+            [(ngModel)]="selectedType2"
+            (change)="applyFilter()"
+          />
+          Sve
+        </label>
+
+        <label class="filter-option">
+          <input
+            type="radio"
+            name="type2"
+            [value]="'POSNO'"
+            [(ngModel)]="selectedType2"
+            (change)="applyFilter()"
+          />
+          Posno
+        </label>
+
+        <label class="filter-option">
+          <input
+            type="radio"
+            name="type2"
+            [value]="'MRSNO'"
+            [(ngModel)]="selectedType2"
+            (change)="applyFilter()"
+          />
+          Mrsno
+        </label>
+      </div>
+    </div>
+
+    <!-- Tip 1 -->
+    <div class="filter-group">
+      <div class="filter-title">Tip 1</div>
+
+      <div class="type-filter">
+        <label class="filter-option">
+          <input
+            type="radio"
+            name="type1"
+            [value]="'ALL'"
+            [(ngModel)]="selectedType1"
+            (change)="applyFilter()"
+          />
+          Sve
+        </label>
+
+        <label class="filter-option">
+          <input
+            type="radio"
+            name="type1"
+            [value]="'PASTA'"
+            [(ngModel)]="selectedType1"
+            (change)="applyFilter()"
+          />
+          Pasta
+        </label>
+
+        <label class="filter-option">
+          <input
+            type="radio"
+            name="type1"
+            [value]="'PICA'"
+            [(ngModel)]="selectedType1"
+            (change)="applyFilter()"
+          />
+          Pica
+        </label>
+
+        <label class="filter-option">
+          <input
+            type="radio"
+            name="type1"
+            [value]="'SALATA'"
+            [(ngModel)]="selectedType1"
+            (change)="applyFilter()"
+          />
+          Salata
+        </label>
+      </div>
+    </div>
+
+  </div>
+
+  <div *ngIf="displayFoods.length === 0">
     Nema dostupnih stavki hrane.
   </div>
 
-  <table *ngIf="foods.length > 0" class="table">
+  <table *ngIf="displayFoods.length > 0" class="table">
     <thead>
       <tr>
         <th>Slika</th>
@@ -18,7 +114,7 @@
     </thead>
 
     <tbody>
-      <tr *ngFor="let food of foods">
+      <tr *ngFor="let food of displayFoods">
         <td class="img-col" (click)="openDetails(food.id!)" style="cursor:pointer">
           <img class="food-thumb" [src]="getImageSrc(food)" alt="Slika hrane" />
         </td>

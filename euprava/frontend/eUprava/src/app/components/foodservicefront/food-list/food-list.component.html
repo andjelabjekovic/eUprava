@@ -1,11 +1,11 @@
 <div class="my-orders-container">
   <h2>Dostupna Hrana</h2>
 
-  <div *ngIf="foods.length === 0">
+  <div *ngIf="displayFoods.length === 0">
     Nema dostupnih stavki hrane.
   </div>
 
-  <table *ngIf="foods.length > 0" class="table">
+  <table *ngIf="displayFoods.length > 0" class="table">
     <thead>
       <tr>
         <th>Slika</th>
@@ -18,7 +18,7 @@
     </thead>
 
     <tbody>
-      <tr *ngFor="let food of foods">
+      <tr *ngFor="let food of displayFoods">
         <td class="img-col" (click)="openDetails(food.id!)" style="cursor:pointer">
           <img class="food-thumb" [src]="getImageSrc(food)" alt="Slika hrane" />
         </td>
