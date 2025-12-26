@@ -1046,3 +1046,90 @@ func (rr *FoodServiceRepo) GetBatchSummaries(foodIDs []primitive.ObjectID) (map[
 	}
 	return out, nil
 }
+
+func (rr *FoodServiceRepo) GetRecommendationsForUser(userID primitive.ObjectID) ([]Food, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	orderCol := rr.getCollection("order")
+	foodCol := rr.getCollection("food")
+
+	// 1) Sve neotkazane porudžbine korisnika
+	filter := bson.M{
+		"userId":   userID,
+		"statusO2": Neotkazana,
+	}
+
+	cursor, err := orderCol.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var orders Orders
+	if err := cursor.All(ctx, &orders); err != nil {
+		return nil, err
+	}
+	if len(orders) == 0 {
+		return []Food{}, nil
+	}
+
+	// 2) Set poručenih foodId + set (type1,type2)
+	orderedIDs := map[primitive.ObjectID]bool{}
+	typePairs := make(map[string]struct{})
+
+	for _, o := range orders {
+		if o == nil || o.Food.ID.IsZero() {
+			continue
+		}
+		orderedIDs[o.Food.ID] = true
+		key := string(o.Food.Type1) + "|" + string(o.Food.Type2)
+		typePairs[key] = struct{}{}
+	}
+
+	// 3) Napravi OR filter za sve (type1,type2) parove
+	orConditions := bson.A{}
+	for k := range typePairs {
+		parts := strings.Split(k, "|")
+		if len(parts) != 2 {
+			continue
+		}
+		orConditions = append(orConditions, bson.M{
+			"type1": FoodType1(parts[0]),
+			"type2": FoodType2(parts[1]),
+		})
+	}
+
+	if len(orConditions) == 0 {
+		return []Food{}, nil
+	}
+
+	foodFilter := bson.M{
+		"$or": orConditions,
+	}
+
+	// izbaci već poručeno
+	if len(orderedIDs) > 0 {
+		ids := make([]primitive.ObjectID, 0, len(orderedIDs))
+		for id := range orderedIDs {
+			ids = append(ids, id)
+		}
+		foodFilter["_id"] = bson.M{"$nin": ids}
+	}
+
+	// 4) LIMIT 5
+	opts := options.Find().SetLimit(5)
+
+	cur2, err := foodCol.Find(ctx, foodFilter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cur2.Close(ctx)
+
+	var recs []Food
+	if err := cur2.All(ctx, &recs); err != nil {
+		return nil, err
+	}
+
+	return recs, nil
+}

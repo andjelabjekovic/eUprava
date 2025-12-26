@@ -4,9 +4,9 @@ body {
   color: #333;
   margin: 0;
   padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+
+  /* ✅ FIX: NE SME flex na body (razvaljuje layout) */
+  display: block;
   min-height: 100vh;
 }
 
@@ -28,15 +28,17 @@ body {
 }
 
 .my-orders-container {
-  width: 95%;
-  max-width: 650px;
+  width: 100%;
+  max-width: 780px;        /* ⬅️ ranije 650px */
   background-color: #fff0f5;
   border-radius: 15px;
   box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
   padding: 30px;
   text-align: center;
-  margin: auto;
+  margin: 0;
+  box-sizing: border-box;
 }
+
 
 h2 {
   font-size: 2rem;
@@ -50,7 +52,8 @@ h2 {
   margin: 20px 0;
 }
 
-.table th, .table td {
+.table th,
+.table td {
   padding: 12px 15px;
   text-align: left;
   border: 1px solid #ddd;
@@ -122,21 +125,25 @@ button:disabled {
   height: 18px;
 }
 
-.pointer { cursor: pointer; }
+.pointer {
+  cursor: pointer;
+}
 
-.star-empty { color: #ddd; }
+.star-empty {
+  color: #ddd;
+}
 
 .star-fill {
   position: absolute;
   left: 0;
   top: 0;
   overflow: hidden;
-  color: #f7c948; /* zuta */
+  color: #f7c948;
   width: 0%;
   white-space: nowrap;
 }
 
-/* ✅ NOVO: layout za oba filtera (Tip1 + Tip2) */
+/* ✅ layout za oba filtera (Tip1 + Tip2) */
 .filters-wrap {
   display: flex;
   flex-direction: column;
@@ -170,4 +177,110 @@ button:disabled {
   gap: 6px;
   align-items: center;
   cursor: pointer;
+}
+
+.page-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  width: 100%;
+  justify-content: center;
+  align-items: start;
+
+  /* ⬅️ povećano “ležište” */
+  max-width: 1220px;     /* ranije 1050 */
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+@media (min-width: 1000px) {
+  .page-grid {
+    grid-template-columns: 780px 360px; /* ⬅️ ranije 650px */
+    column-gap: 40px;
+  }
+}
+
+
+.recommendations-panel {
+  width: 95%;
+  max-width: 360px;
+  background-color: #fff0f5;
+  border-radius: 15px;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+  padding: 18px;
+  box-sizing: border-box;
+  margin: 0 auto;
+
+  position: sticky;
+  top: 120px;
+
+  /* ✅ NOVO: da stane više kartica */
+  max-height: calc(100vh - 160px); /* top + malo margine */
+  overflow-y: auto;
+}
+.recommendations-panel::-webkit-scrollbar {
+  width: 8px;
+}
+.recommendations-panel::-webkit-scrollbar-thumb {
+  background: rgba(216, 112, 147, 0.45);
+  border-radius: 10px;
+}
+.recommendations-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+.recommendations-panel h2 {
+  margin: 0 0 10px;
+  color: #d87093;
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+.rec-note {
+  font-size: 0.9rem;
+  color: #555;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.rec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rec-card {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255, 228, 225, 0.75);
+  border: 1px solid #f2c7cf;
+  cursor: pointer;
+}
+
+.rec-card:hover {
+  background: rgba(255, 228, 225, 1);
+}
+
+.rec-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+.rec-title {
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.rec-meta {
+  font-size: 0.85rem;
+  color: #666;
 }

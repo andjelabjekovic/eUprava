@@ -696,6 +696,33 @@ func (s *FoodServiceHandler) MiddlewareStudentDeserialization(next http.Handler)
 	})
 }
 
+func (h *FoodServiceHandler) GetRecommendationsHandler(rw http.ResponseWriter, r *http.Request) {
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		http.Error(rw, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	if err != nil {
+		h.logger.Println("Invalid user ID format:", err)
+		http.Error(rw, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	recs, err := h.foodServiceRepo.GetRecommendationsForUser(userID)
+	if err != nil {
+		h.logger.Println("Error retrieving recommendations:", err)
+		http.Error(rw, "Error retrieving recommendations.", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(rw).Encode(recs)
+}
+
+
 func (s *FoodServiceHandler) MiddlewareTherapyDeserialization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, h *http.Request) {
 		students := &data.TherapyData{}

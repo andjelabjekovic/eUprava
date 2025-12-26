@@ -23,6 +23,9 @@ export class FoodListStudentComponent implements OnInit {
   selectedType2: 'ALL' | 'POSNO' | 'MRSNO' = 'ALL';
   selectedType1: 'ALL' | 'PASTA' | 'PICA' | 'SALATA' = 'ALL';
 
+  // ✅ preporuke
+  recommendedFoods: FoodData[] = [];
+
   summariesAvg: Record<string, ReviewSummary> = {};
   summariesUser: Record<string, ReviewSummary> = {};
 
@@ -45,6 +48,9 @@ export class FoodListStudentComponent implements OnInit {
         this.applyFilter();      // inicijalno (ALL+ALL)
         this.loadAvgBatch();
         this.loadUserSummaries();
+
+        // ✅ ucitaj preporuke
+        this.loadRecommendations();
       },
       error => console.error('Greška prilikom preuzimanja hrane:', error)
     );
@@ -63,6 +69,23 @@ export class FoodListStudentComponent implements OnInit {
     }
 
     this.displayFoods = list;
+  }
+
+  private loadRecommendations(): void {
+    const userId = this.authService.getUserId();
+    if (!userId) {
+      this.recommendedFoods = [];
+      return;
+    }
+
+    this.foodService.getRecommendations(userId).subscribe({
+      next: (recs: FoodData[]) => {
+        this.recommendedFoods = recs || [];
+      },
+      error: () => {
+        this.recommendedFoods = [];
+      }
+    });
   }
 
   private loadAvgBatch(): void {
@@ -121,6 +144,9 @@ export class FoodListStudentComponent implements OnInit {
             if (s?.foodId) this.summariesUser[s.foodId] = s;
           }
         });
+
+        // ✅ osvezi preporuke (nije bitno sto navigiras, ali neka bude)
+        this.loadRecommendations();
       },
       () => alert('Došlo je do greške prilikom kreiranja porudžbine.')
     );

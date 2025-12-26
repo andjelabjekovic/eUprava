@@ -1,172 +1,200 @@
-<div class="my-orders-container">
-  <h2>Dostupna Hrana</h2>
+<div class="page-grid">
 
-  <!-- FILTERI: Tip2 + Tip1 (AND) -->
-  <div class="filters-wrap">
+  <!-- LEFT: postojeći container -->
+  <div class="my-orders-container">
+    <h2>Dostupna Hrana</h2>
 
-    <!-- Tip 2 -->
-    <div class="filter-group">
-      <div class="filter-title">Tip 2</div>
+    <!-- FILTERI: Tip2 + Tip1 (AND) -->
+    <div class="filters-wrap">
 
-      <div class="type-filter">
-        <label class="filter-option">
-          <input
-            type="radio"
-            name="type2"
-            [value]="'ALL'"
-            [(ngModel)]="selectedType2"
-            (change)="applyFilter()"
-          />
-          Sve
-        </label>
+      <!-- Tip 2 -->
+      <div class="filter-group">
+        <div class="filter-title">Tip 2</div>
 
-        <label class="filter-option">
-          <input
-            type="radio"
-            name="type2"
-            [value]="'POSNO'"
-            [(ngModel)]="selectedType2"
-            (change)="applyFilter()"
-          />
-          Posno
-        </label>
+        <div class="type-filter">
+          <label class="filter-option">
+            <input
+              type="radio"
+              name="type2"
+              [value]="'ALL'"
+              [(ngModel)]="selectedType2"
+              (change)="applyFilter()"
+            />
+            Sve
+          </label>
 
-        <label class="filter-option">
-          <input
-            type="radio"
-            name="type2"
-            [value]="'MRSNO'"
-            [(ngModel)]="selectedType2"
-            (change)="applyFilter()"
-          />
-          Mrsno
-        </label>
+          <label class="filter-option">
+            <input
+              type="radio"
+              name="type2"
+              [value]="'POSNO'"
+              [(ngModel)]="selectedType2"
+              (change)="applyFilter()"
+            />
+            Posno
+          </label>
+
+          <label class="filter-option">
+            <input
+              type="radio"
+              name="type2"
+              [value]="'MRSNO'"
+              [(ngModel)]="selectedType2"
+              (change)="applyFilter()"
+            />
+            Mrsno
+          </label>
+        </div>
       </div>
+
+      <!-- Tip 1 -->
+      <div class="filter-group">
+        <div class="filter-title">Tip 1</div>
+
+        <div class="type-filter">
+          <label class="filter-option">
+            <input
+              type="radio"
+              name="type1"
+              [value]="'ALL'"
+              [(ngModel)]="selectedType1"
+              (change)="applyFilter()"
+            />
+            Sve
+          </label>
+
+          <label class="filter-option">
+            <input
+              type="radio"
+              name="type1"
+              [value]="'PASTA'"
+              [(ngModel)]="selectedType1"
+              (change)="applyFilter()"
+            />
+            Pasta
+          </label>
+
+          <label class="filter-option">
+            <input
+              type="radio"
+              name="type1"
+              [value]="'PICA'"
+              [(ngModel)]="selectedType1"
+              (change)="applyFilter()"
+            />
+            Pica
+          </label>
+
+          <label class="filter-option">
+            <input
+              type="radio"
+              name="type1"
+              [value]="'SALATA'"
+              [(ngModel)]="selectedType1"
+              (change)="applyFilter()"
+            />
+            Salata
+          </label>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Tip 1 -->
-    <div class="filter-group">
-      <div class="filter-title">Tip 1</div>
-
-      <div class="type-filter">
-        <label class="filter-option">
-          <input
-            type="radio"
-            name="type1"
-            [value]="'ALL'"
-            [(ngModel)]="selectedType1"
-            (change)="applyFilter()"
-          />
-          Sve
-        </label>
-
-        <label class="filter-option">
-          <input
-            type="radio"
-            name="type1"
-            [value]="'PASTA'"
-            [(ngModel)]="selectedType1"
-            (change)="applyFilter()"
-          />
-          Pasta
-        </label>
-
-        <label class="filter-option">
-          <input
-            type="radio"
-            name="type1"
-            [value]="'PICA'"
-            [(ngModel)]="selectedType1"
-            (change)="applyFilter()"
-          />
-          Pica
-        </label>
-
-        <label class="filter-option">
-          <input
-            type="radio"
-            name="type1"
-            [value]="'SALATA'"
-            [(ngModel)]="selectedType1"
-            (change)="applyFilter()"
-          />
-          Salata
-        </label>
-      </div>
+    <div *ngIf="displayFoods.length === 0">
+      Nema dostupnih stavki hrane.
     </div>
 
+    <table *ngIf="displayFoods.length > 0" class="table">
+      <thead>
+        <tr>
+          <th>Slika</th>
+          <th>Naziv</th>
+          <th>Tip 1</th>
+          <th>Tip 2</th>
+          <th>Ocena</th>
+          <th>Akcija</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let food of displayFoods">
+          <td class="img-col" (click)="openDetails(food.id!)" style="cursor:pointer">
+            <img class="food-thumb" [src]="getImageSrc(food)" alt="Slika hrane" />
+          </td>
+
+          <td (click)="openDetails(food.id!)" style="cursor:pointer">
+            {{ food.foodName }}
+          </td>
+
+          <td>{{ mapType1(food.type1) }}</td>
+          <td>{{ mapType2(food.type2) }}</td>
+
+          <td>
+            <!-- AVG stars (uvek) -->
+            <div class="stars-row">
+              <span class="stars-label">
+                {{ (summariesAvg[food.id!]?.avgRating || 0) | number:'1.1-1' }}
+                ({{ summariesAvg[food.id!]?.ratingCount || 0 }})
+              </span>
+
+              <div class="stars read-only">
+                <span *ngFor="let s of [1,2,3,4,5]; let i = index" class="star">
+                  <span class="star-empty">★</span>
+                  <span class="star-fill" [style.width.%]="getStarFillPercent((summariesAvg[food.id!]?.avgRating || 0), i)">★</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- YOUR rating (samo ako canReview) -->
+            <div class="your-rating" *ngIf="summariesUser[food.id!]?.canReview">
+              <span class="your-rating-label">Tvoja ocena:</span>
+
+              <div class="stars interactive"
+                   (mouseleave)="clearHover(food.id!)">
+                <span
+                  *ngFor="let s of [1,2,3,4,5]; let i = index"
+                  class="star pointer"
+                  (mouseenter)="setHover(food.id!, i+1)"
+                  (click)="setRating(food.id!, i+1)"
+                >
+                  <span class="star-empty">★</span>
+                  <span class="star-fill"
+                        [style.width.%]="getUserStarFillPercent(food.id!, i)"
+                  >★</span>
+                </span>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <button (click)="orderFood(food.id!)">Order</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
-  <div *ngIf="displayFoods.length === 0">
-    Nema dostupnih stavki hrane.
+  <!-- RIGHT: PREPORUKE -->
+  <div class="recommendations-panel" *ngIf="recommendedFoods.length > 0">
+    <h2>Preporuke</h2>
+
+    <div class="rec-note">
+      Na osnovu tvojih prethodnih porudžbina.
+    </div>
+
+    <div class="rec-list">
+      <div
+        class="rec-card"
+        *ngFor="let food of recommendedFoods"
+        (click)="openDetails(food.id!)"
+      >
+        <img class="rec-thumb" [src]="getImageSrc(food)" alt="Slika hrane" />
+        <div class="rec-info">
+          <div class="rec-title">{{ food.foodName }}</div>
+          <div class="rec-meta">{{ mapType1(food.type1) }} • {{ mapType2(food.type2) }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <table *ngIf="displayFoods.length > 0" class="table">
-    <thead>
-      <tr>
-        <th>Slika</th>
-        <th>Naziv</th>
-        <th>Tip 1</th>
-        <th>Tip 2</th>
-        <th>Ocena</th>
-        <th>Akcija</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr *ngFor="let food of displayFoods">
-        <td class="img-col" (click)="openDetails(food.id!)" style="cursor:pointer">
-          <img class="food-thumb" [src]="getImageSrc(food)" alt="Slika hrane" />
-        </td>
-
-        <td (click)="openDetails(food.id!)" style="cursor:pointer">
-          {{ food.foodName }}
-        </td>
-
-        <td>{{ mapType1(food.type1) }}</td>
-        <td>{{ mapType2(food.type2) }}</td>
-
-        <td>
-          <!-- AVG stars (uvek) -->
-          <div class="stars-row">
-            <span class="stars-label">
-              {{ (summariesAvg[food.id!]?.avgRating || 0) | number:'1.1-1' }}
-              ({{ summariesAvg[food.id!]?.ratingCount || 0 }})
-            </span>
-
-            <div class="stars read-only">
-              <span *ngFor="let s of [1,2,3,4,5]; let i = index" class="star">
-                <span class="star-empty">★</span>
-                <span class="star-fill" [style.width.%]="getStarFillPercent((summariesAvg[food.id!]?.avgRating || 0), i)">★</span>
-              </span>
-            </div>
-          </div>
-
-          <!-- YOUR rating (samo ako canReview) -->
-          <div class="your-rating" *ngIf="summariesUser[food.id!]?.canReview">
-            <span class="your-rating-label">Tvoja ocena:</span>
-
-            <div class="stars interactive"
-                 (mouseleave)="clearHover(food.id!)">
-              <span
-                *ngFor="let s of [1,2,3,4,5]; let i = index"
-                class="star pointer"
-                (mouseenter)="setHover(food.id!, i+1)"
-                (click)="setRating(food.id!, i+1)"
-              >
-                <span class="star-empty">★</span>
-                <span class="star-fill"
-                      [style.width.%]="getUserStarFillPercent(food.id!, i)"
-                >★</span>
-              </span>
-            </div>
-          </div>
-        </td>
-
-        <td>
-          <button (click)="orderFood(food.id!)">Order</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
 </div>

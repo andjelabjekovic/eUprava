@@ -162,6 +162,10 @@ router.PathPrefix("/uploads/").
 	batchSummaries := router.Methods(http.MethodPost).Subrouter()
 	batchSummaries.HandleFunc("/foods/reviews/summaries", foodServiceHandler.BatchFoodSummaries)
 
+
+	getRecommendations := router.Methods(http.MethodGet).Subrouter()
+	getRecommendations.HandleFunc("/recommendations", foodServiceHandler.GetRecommendationsHandler)
+
 	// Server
 	server := http.Server{
 		Addr:         ":" + port,

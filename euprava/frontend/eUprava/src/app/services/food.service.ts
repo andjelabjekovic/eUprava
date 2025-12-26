@@ -84,6 +84,15 @@ export class FoodService {
     return this.http.get<OrderData[]>(`${environment.baseApiUrl}/${this.url}/my-orders`, { params });
   }
 
+  getRecommendations(userId: string): Observable<FoodData[]> {
+  let params = new HttpParams().set('user_id', userId);
+  return this.http.get<FoodData[]>(
+    `${environment.baseApiUrl}/${this.url}/recommendations`,
+    { params }
+  );
+}
+
+
   cancelOrder(orderId: string): Observable<void> {
     return this.http.put<void>(`${environment.baseApiUrl}/${this.url}/order/${orderId}/cancel`, {});
   }
