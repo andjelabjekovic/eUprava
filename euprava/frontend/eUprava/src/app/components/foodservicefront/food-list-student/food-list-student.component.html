@@ -112,6 +112,7 @@
           <th>Tip 1</th>
           <th>Tip 2</th>
           <th>Ocena</th>
+            <th>Cena</th>
           <th>Akcija</th>
         </tr>
       </thead>
@@ -165,7 +166,7 @@
               </div>
             </div>
           </td>
-
+            <td>{{ food.price }} din</td>
           <td>
             <button (click)="orderFood(food.id!)">Order</button>
           </td>
@@ -173,13 +174,13 @@
       </tbody>
     </table>
   </div>
-
+ 
   <!-- RIGHT: PREPORUKE -->
   <div class="recommendations-panel" *ngIf="recommendedFoods.length > 0">
     <h2>Preporuke</h2>
 
     <div class="rec-note">
-      Na osnovu tvojih prethodnih porudžbina.
+      Na osnovu tvojih prethodnih porudžbina. 
     </div>
 
     <div class="rec-list">

@@ -34,6 +34,9 @@ export class LoginComponent {
           next: (response: any) => {
             localStorage.setItem('token', response.token);
             localStorage.setItem('user_id', response.user.user_id);
+             // ✅ OVO DODAJ
+            console.log('[LOGIN] Logged user ID:', response.user.user_id);
+
             this.authService.login(response.user.user_type);
             this.errorMessage = null;
             alert('Login successful!');

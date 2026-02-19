@@ -19,7 +19,14 @@ type User struct {
 	Username    string             `bson:"username,omitempty" json:"username,omitempty"`
 	UserType    UserType           `bson:"userType,omitempty" json:"userType,omitempty"`
 	FoodID      primitive.ObjectID `bson:"foodID,omitempty" json:"foodID,omitempty"`
+	Status      StudentStatus      `bson:"status,omitempty" json:"status,omitempty"`
 }
+type StudentStatus string
+
+const (
+	SAMOFINANSIRANJE StudentStatus = "SAMOFINANSIRANJE"
+	BUDZET           StudentStatus = "BUDZET"
+)
 
 type UserType string
 
@@ -44,29 +51,25 @@ type Food struct {
 	Type1     FoodType1          `bson:"type1,omitempty" json:"type1,omitempty"`
 	Type2     FoodType2          `bson:"type2,omitempty" json:"type2,omitempty"`
 	ImagePath string             `bson:"imagePath,omitempty" json:"imagePath,omitempty"`
+	Price     int                `bson:"price,omitempty" json:"price,omitempty"`
 }
-
-
-
 
 type Foods []*Food
 
 type FoodType1 string
 
 const (
-	PASTA   FoodType1 = "PASTA"
-	PICA    FoodType1 = "PICA"
-	SALATA  FoodType1 = "SALATA"
+	PASTA  FoodType1 = "PASTA"
+	PICA   FoodType1 = "PICA"
+	SALATA FoodType1 = "SALATA"
 )
 
 type FoodType2 string
 
 const (
-	POSNO  FoodType2 = "POSNO"
-	MRSNO  FoodType2 = "MRSNO"
+	POSNO FoodType2 = "POSNO"
+	MRSNO FoodType2 = "MRSNO"
 )
-
-
 
 func (o *Food) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
@@ -117,19 +120,18 @@ type Student struct {
 type Students []*Student
 
 type TherapyData struct {
-    ID                    primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-    StudentHealthRecordID primitive.ObjectID `bson:"studentHealthRecordID,omitempty" json:"studentHealthRecordID,omitempty"`
-    Diagnosis             string             `bson:"diagnosis,omitempty" json:"diagnosis,omitempty"`
-    Status                Status             `bson:"status,omitempty" json:"status,omitempty"`
+	ID                    primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	StudentHealthRecordID primitive.ObjectID `bson:"studentHealthRecordID,omitempty" json:"studentHealthRecordID,omitempty"`
+	Diagnosis             string             `bson:"diagnosis,omitempty" json:"diagnosis,omitempty"`
+	Status                Status             `bson:"status,omitempty" json:"status,omitempty"`
 }
 
 type Order struct {
-	ID      primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	Food    Food               `bson:"food,omitempty" json:"food,omitempty"`
-	UserID  primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
-	StatusO StatusO            `bson:"statusO,omitempty" json:"statusO,omitempty"`
-	StatusO2 StatusO2            `bson:"statusO2,omitempty" json:"statusO2,omitempty"`
-
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Food     Food               `bson:"food,omitempty" json:"food,omitempty"`
+	UserID   primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
+	StatusO  StatusO            `bson:"statusO,omitempty" json:"statusO,omitempty"`
+	StatusO2 StatusO2           `bson:"statusO2,omitempty" json:"statusO2,omitempty"`
 }
 
 type StatusO string
@@ -137,7 +139,6 @@ type StatusO string
 const (
 	Prihvacena   StatusO = "Prihvacena"
 	Neprihvacena StatusO = "Neprihvacena"
-	
 )
 
 type StatusO2 string
@@ -145,7 +146,6 @@ type StatusO2 string
 const (
 	Otkazana   StatusO2 = "Otkazana"
 	Neotkazana StatusO2 = "Neotkazana"
-	
 )
 
 type Orders []*Order

@@ -59,6 +59,22 @@ services:
       - logs_volume:/logs
       - food_uploads:/uploads
 
+  university--service:
+    image: university--service
+    container_name: university--service
+    build:
+      context: .
+      dockerfile: ./university--service/Dockerfile
+    restart: always
+    ports:
+      - "8006:8006"
+    environment:
+      - PORT=8006
+      - FOOD_SERVICE_URL=http://food_service:8003
+    networks:
+      - network
+
+
   api_gateway:
     build:
       context: ./api_gateway/
@@ -69,8 +85,7 @@ services:
       - ${GATEWAY_PORT}:${GATEWAY_PORT}
     networks:
       - network
-      
-  
+
   auth-service:
     build:
       context: ./auth-service
@@ -111,8 +126,6 @@ services:
     networks:
       - network
 
-  
-      
   healthcare_db:
     image: mongo
     container_name: healthcare_db

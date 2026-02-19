@@ -47,19 +47,17 @@ func main() {
 	// Router + middleware
 	router := mux.NewRouter()
 	router.Use(MiddlewareContentTypeSet)
-uploadDir := os.Getenv("UPLOAD_DIR")
-if uploadDir == "" {
-    uploadDir = "./uploads"
-}
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = "./uploads"
+	}
 
-if err := os.MkdirAll(uploadDir, 0755); err != nil {
-    logger.Fatal("Cannot create upload dir:", err)
-}
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		logger.Fatal("Cannot create upload dir:", err)
+	}
 
-router.PathPrefix("/uploads/").
-  Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("/uploads/"))))
-
-
+	router.PathPrefix("/uploads/").
+		Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("/uploads/"))))
 
 	uploadFoodImage := router.Methods(http.MethodPost).Subrouter()
 	uploadFoodImage.HandleFunc("/food/{id}/image", foodServiceHandler.UploadFoodImageHandler)
@@ -81,6 +79,7 @@ router.PathPrefix("/uploads/").
 
 	deleteFoodEntry := router.Methods(http.MethodDelete).Subrouter()
 	deleteFoodEntry.HandleFunc("/food/{id}", foodServiceHandler.DeleteFoodHandler)
+	//ovo
 
 	getAllFood := router.Methods(http.MethodGet).Subrouter()
 	getAllFood.HandleFunc("/food", foodServiceHandler.GetAllFood)
@@ -135,6 +134,10 @@ router.PathPrefix("/uploads/").
 	updateTherapyStatus := router.Methods(http.MethodPut).Subrouter()
 	updateTherapyStatus.HandleFunc("/therapy/{id}", foodServiceHandler.UpdateTherapyStatus)
 
+	//komunikacija
+	updateStudentStatus := router.Methods(http.MethodPut).Subrouter()
+	updateStudentStatus.HandleFunc("/student/{id}/status", foodServiceHandler.UpdateStudentStatusHandler)
+
 	// =========================
 	// ✅ REVIEWS ROUTES (ALL IN MAIN)
 	// =========================
@@ -161,7 +164,6 @@ router.PathPrefix("/uploads/").
 	// Batch summaries for food list
 	batchSummaries := router.Methods(http.MethodPost).Subrouter()
 	batchSummaries.HandleFunc("/foods/reviews/summaries", foodServiceHandler.BatchFoodSummaries)
-
 
 	getRecommendations := router.Methods(http.MethodGet).Subrouter()
 	getRecommendations.HandleFunc("/recommendations", foodServiceHandler.GetRecommendationsHandler)

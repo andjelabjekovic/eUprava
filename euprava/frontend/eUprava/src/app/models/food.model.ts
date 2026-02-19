@@ -5,6 +5,8 @@ export interface FoodData {
   type1?: string;
 type2?: string;
 imagePath?: string;
+price?: number;
+
 
 
 }

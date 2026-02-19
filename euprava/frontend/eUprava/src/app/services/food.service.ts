@@ -50,10 +50,18 @@ export class FoodService {
       formData
     );
   }
-
+/*
   getAllFoods(): Observable<FoodData[]> {
     return this.http.get<FoodData[]>(`${environment.baseApiUrl}/${this.url}/food`);
   }
+*/
+getAllFoods(userId?: string): Observable<FoodData[]> {
+  const url = userId
+    ? `${environment.baseApiUrl}/${this.url}/food?userId=${userId}`
+    : `${environment.baseApiUrl}/${this.url}/food`;
+
+  return this.http.get<FoodData[]>(url);
+}
 
   deleteFood(foodId: string): Observable<void> {
     return this.http.delete<void>(`${environment.baseApiUrl}/${this.url}/food/${foodId}`);

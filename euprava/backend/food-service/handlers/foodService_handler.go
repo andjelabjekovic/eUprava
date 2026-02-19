@@ -84,6 +84,10 @@ func (h *FoodServiceHandler) CreateFoodHandler(rw http.ResponseWriter, r *http.R
 
 	foodData.UserID = oid
 
+	// ✅ DEFAULT CENA
+	foodData.Price = 600
+
+
 	err = h.foodServiceRepo.CreateFoodEntry(r, foodData)
 	if err != nil {
 		h.logger.Print("Database exception: ", err)
@@ -94,8 +98,9 @@ func (h *FoodServiceHandler) CreateFoodHandler(rw http.ResponseWriter, r *http.R
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(rw).Encode(foodData)
-
 }
+
+//komunikacija
 
 func (h *FoodServiceHandler) GetFoodByIDHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -279,6 +284,45 @@ func (h *FoodServiceHandler) GetAllOrdersHandler(rw http.ResponseWriter, r *http
 	rw.WriteHeader(http.StatusOK)
 	json.NewEncoder(rw).Encode(orders)
 }
+//komunikacija
+type UpdateStudentStatusRequest struct {
+	Status data.StudentStatus `json:"status"`
+}
+
+func (h *FoodServiceHandler) UpdateStudentStatusHandler(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	userID, err := primitive.ObjectIDFromHex(idStr)
+	if err != nil {
+		http.Error(rw, "Invalid user id", http.StatusBadRequest)
+		return
+	}
+
+	var req UpdateStudentStatusRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(rw, "Invalid body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Status != data.BUDZET && req.Status != data.SAMOFINANSIRANJE {
+		http.Error(rw, "status must be BUDZET or SAMOFINANSIRANJE", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.foodServiceRepo.UpdateStudentStatus(userID, req.Status); err != nil {
+		h.logger.Println("Error updating student status:", err)
+		http.Error(rw, "Error updating student status", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(rw).Encode(map[string]any{
+		"userId":  userID.Hex(),
+		"status":  req.Status,
+		"message": "Student status updated",
+	})
+}
 
 func (h *FoodServiceHandler) CreateOrderHandler(rw http.ResponseWriter, r *http.Request) {
 	// Izvuci userId iz query stringa (analogno cookId za hranu)
@@ -417,19 +461,37 @@ func (r *FoodServiceHandler) EditFoodForStudent(rw http.ResponseWriter, h *http.
 	rw.WriteHeader(http.StatusOK)
 }
 
-// GetAllFood returns all food items and sends them as a JSON response.
+// real
 func (h *FoodServiceHandler) GetAllFood(rw http.ResponseWriter, r *http.Request) {
-	foods, err := h.foodServiceRepo.GetAllFood()
-	if err != nil {
-		http.Error(rw, "Error retrieving food items", http.StatusInternalServerError)
-		return
-	}
+    foods, err := h.foodServiceRepo.GetAllFood()
+    if err != nil {
+        http.Error(rw, "Error retrieving food items", http.StatusInternalServerError)
+        return
+    }
 
-	err = json.NewEncoder(rw).Encode(foods)
-	if err != nil {
-		http.Error(rw, "Error encoding food items to JSON", http.StatusInternalServerError)
-		return
-	}
+    // osiguraj default cenu ako je 0
+    for i := range *foods {
+        if (*foods)[i].Price == 0 {
+            (*foods)[i].Price = 600
+        }
+    }
+
+    userIDStr := r.URL.Query().Get("userId")
+    if userIDStr != "" {
+        userID, err := primitive.ObjectIDFromHex(userIDStr)
+        if err == nil {
+            status, err := h.foodServiceRepo.GetStudentStatus(userID)
+            // ✅ čak i ako err, NE RUŠIMO listu
+            if err == nil && status == data.BUDZET {
+                for i := range *foods {
+                    (*foods)[i].Price = 900
+                }
+            }
+        }
+    }
+
+    rw.Header().Set("Content-Type", "application/json")
+    _ = json.NewEncoder(rw).Encode(foods)
 }
 
 // getAllFood
@@ -722,7 +784,6 @@ func (h *FoodServiceHandler) GetRecommendationsHandler(rw http.ResponseWriter, r
 	_ = json.NewEncoder(rw).Encode(recs)
 }
 
-
 func (s *FoodServiceHandler) MiddlewareTherapyDeserialization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, h *http.Request) {
 		students := &data.TherapyData{}
@@ -759,4 +820,3 @@ func (h *FoodServiceHandler) MiddlewareFoodDeserialization(next http.Handler) ht
 		next.ServeHTTP(rw, r)
 	})
 }
-

@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strings"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/sessions"
@@ -207,7 +207,6 @@ func (rr *FoodServiceRepo) CancelOrder(orderID primitive.ObjectID) error {
 	return nil
 }
 
-
 func (rr *FoodServiceRepo) UpdateFoodEntry(r *http.Request, foodID primitive.ObjectID, foodData *Food) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -242,22 +241,50 @@ func (rr *FoodServiceRepo) GetFoodByID(r *http.Request, id primitive.ObjectID) (
 
 	return &food, nil
 }
-
 func (rr *FoodServiceRepo) CreateFoodEntry(r *http.Request, foodData *Food) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	// Postavi jedinstveni ID za food entry
+
+	// ID
 	foodData.ID = primitive.NewObjectID()
 
-	// Nabavi kolekciju iz baze
+	// ✅ DEFAULT CENA (sigurnosno)
+	if foodData.Price == 0 {
+		foodData.Price = 600
+	}
+
 	foodCollection := rr.getCollection("food")
-	// Umetni novi unos u bazu
 	_, err := foodCollection.InsertOne(ctx, foodData)
 	if err != nil {
 		return err
 	}
 	return nil
 }
+
+// komunikacija
+func (rr *FoodServiceRepo) UpdateStudentStatus(userID primitive.ObjectID, status StudentStatus) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	userCollection := rr.getCollection("user")
+
+	opts := options.Update().SetUpsert(true)
+
+	_, err := userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		bson.M{
+			"$set": bson.M{"status": status},
+			"$setOnInsert": bson.M{
+				"_id": userID,
+			},
+		},
+		opts,
+	)
+
+	return err
+}
+
 func (rr *FoodServiceRepo) GetAllOrders() ([]Order, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -428,8 +455,6 @@ func (rr *FoodServiceRepo) CreateOrderEntry(r *http.Request, orderData *Order) e
 	return nil
 }
 
-
-
 // GetListFood vraća sve unose hrane iz baze, sa dummy korisnikom (nil)
 func (rr *FoodServiceRepo) GetListFood() ([]Food, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -457,7 +482,6 @@ func (rr *FoodServiceRepo) GetListFood() ([]Food, error) {
 	return foodList, nil
 }
 
-
 func (rr *FoodServiceRepo) UpdateFoodImagePath(r *http.Request, foodID primitive.ObjectID, imagePath string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -470,8 +494,29 @@ func (rr *FoodServiceRepo) UpdateFoodImagePath(r *http.Request, foodID primitive
 	return err
 }
 
+func (rr *FoodServiceRepo) GetStudentStatus(userID primitive.ObjectID) (StudentStatus, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
+	userCollection := rr.getCollection("user")
 
+	var u User
+	err := userCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&u)
+	if err != nil {
+		// ✅ ako user ne postoji u food bazi -> default
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return SAMOFINANSIRANJE, nil
+		}
+		return "", err
+	}
+
+	if u.Status == "" {
+		return SAMOFINANSIRANJE, nil
+	}
+	return u.Status, nil
+}
+
+//real
 // GetAllFood returns all food records from the 'food' collection.
 
 func (rr *FoodServiceRepo) GetAllFood() (*Foods, error) {
@@ -498,7 +543,6 @@ func (rr *FoodServiceRepo) GetAllFood() (*Foods, error) {
 	// Return the food items.
 	return &foods, nil
 }
-
 
 // edit
 
@@ -762,6 +806,7 @@ func (rr *FoodServiceRepo) GetAllTherapiesFromHealthCareService() (Therapies, er
 func (rr *FoodServiceRepo) getCollection(collectionName string) *mongo.Collection {
 	return rr.cli.Database("MongoDatabase").Collection(collectionName)
 }
+
 // ===== REVIEWS / RATINGS / COMMENTS =====
 
 func (rr *FoodServiceRepo) EnsureReviewIndexes() error {
@@ -773,7 +818,7 @@ func (rr *FoodServiceRepo) EnsureReviewIndexes() error {
 
 	// Unique (foodId, userId) for rating per user per food
 	_, err := ratings.Indexes().CreateOne(ctx, mongo.IndexModel{
-		Keys: bson.D{{Key: "foodId", Value: 1}, {Key: "userId", Value: 1}},
+		Keys:    bson.D{{Key: "foodId", Value: 1}, {Key: "userId", Value: 1}},
 		Options: options.Index().SetUnique(true).SetName("uniq_food_user_rating"),
 	})
 	if err != nil {
@@ -782,7 +827,7 @@ func (rr *FoodServiceRepo) EnsureReviewIndexes() error {
 
 	// For comments: by food and createdAt
 	_, err = comments.Indexes().CreateOne(ctx, mongo.IndexModel{
-		Keys: bson.D{{Key: "foodId", Value: 1}, {Key: "createdAt", Value: -1}},
+		Keys:    bson.D{{Key: "foodId", Value: 1}, {Key: "createdAt", Value: -1}},
 		Options: options.Index().SetName("comments_by_food_createdAt"),
 	})
 	return err
@@ -796,8 +841,8 @@ func (rr *FoodServiceRepo) HasUserOrderedFood(userID primitive.ObjectID, foodID 
 	orders := rr.getCollection("order")
 
 	filter := bson.M{
-		"userId":    userID,
-		"food._id":  foodID,
+		"userId":   userID,
+		"food._id": foodID,
 		// ako želiš striktno: samo neotkazane:
 		// "statusO2": Neotkazana,
 	}
@@ -916,7 +961,7 @@ func (rr *FoodServiceRepo) GetSummary(foodID primitive.ObjectID) (avg float64, r
 	pipeline := mongo.Pipeline{
 		bson.D{{Key: "$match", Value: bson.M{"foodId": foodID}}},
 		bson.D{{Key: "$project", Value: bson.M{
-			"foodId": 1,
+			"foodId":    1,
 			"ratingNum": bson.M{"$toDouble": "$rating"},
 		}}},
 		bson.D{{Key: "$group", Value: bson.M{
@@ -957,7 +1002,6 @@ func (rr *FoodServiceRepo) GetSummary(foodID primitive.ObjectID) (avg float64, r
 
 	return avg, ratingCount, commentCount, nil
 }
-
 
 func (rr *FoodServiceRepo) GetBatchSummaries(foodIDs []primitive.ObjectID) (map[primitive.ObjectID]ReviewSummary, error) {
 	out := make(map[primitive.ObjectID]ReviewSummary)

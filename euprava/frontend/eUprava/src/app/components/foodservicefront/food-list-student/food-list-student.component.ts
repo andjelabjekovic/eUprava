@@ -35,26 +35,26 @@ export class FoodListStudentComponent implements OnInit {
     private foodService: FoodService,
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) {} 
 
   ngOnInit(): void {
     this.loadFoods();
   }
+loadFoods(): void {
+  const userId = this.authService.getUserId();
 
-  loadFoods(): void {
-    this.foodService.getAllFoods().subscribe(
-      (data: FoodData[]) => {
-        this.foods = data;
-        this.applyFilter();      // inicijalno (ALL+ALL)
-        this.loadAvgBatch();
-        this.loadUserSummaries();
+  this.foodService.getAllFoods(userId || undefined).subscribe(
+    (data: FoodData[]) => {
+      this.foods = data;
+      this.applyFilter();
+      this.loadAvgBatch();
+      this.loadUserSummaries();
+      this.loadRecommendations();
+    },
+    error => console.error('Greška prilikom preuzimanja hrane:', error)
+  );
+}
 
-        // ✅ ucitaj preporuke
-        this.loadRecommendations();
-      },
-      error => console.error('Greška prilikom preuzimanja hrane:', error)
-    );
-  }
 
   // ✅ Filter: Tip1 AND Tip2
   applyFilter(): void {
