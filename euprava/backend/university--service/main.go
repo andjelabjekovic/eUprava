@@ -9,6 +9,10 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"university--service/client"
+	"university--service/handlers"
+	"university--service/store"
 )
 
 type UpdateStudentStatusRequest struct {
@@ -23,9 +27,16 @@ func main() {
 
 	foodURL := os.Getenv("FOOD_SERVICE_URL")
 	if foodURL == "" {
-		foodURL = "http://food-service:8000" // u docker mreži
-		// lokalno: "http://localhost:8000" ili host port koji mapira na 8000
+		foodURL = "http://food_service:8003" // u docker mreži
+		// lokalno: "http://localhost:8003"
 	}
+
+	logger := log.New(os.Stdout, "[UNIVERSITY] ", log.LstdFlags)
+
+	// ✅ deps za catering
+	cateringStore := store.NewCateringStore()
+	foodClient := client.NewFoodClient(foodURL)
+	cateringHandler := handlers.NewCateringHandler(logger, cateringStore, foodClient)
 
 	mux := http.NewServeMux()
 
@@ -35,7 +46,10 @@ func main() {
 		_, _ = w.Write([]byte("university--service OK"))
 	})
 
+	// =========================
+	// ✅ STUDENT STATUS (TVOJ KOD 1/1)
 	// PUT /university/student/{id}/status
+	// =========================
 	mux.HandleFunc("/university/student/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -69,7 +83,7 @@ func main() {
 
 		// poziv Food servisa: PUT /student/{id}/status
 		payload, _ := json.Marshal(req)
-		client := &http.Client{Timeout: 10 * time.Second}
+		clientHTTP := &http.Client{Timeout: 10 * time.Second}
 
 		foodEndpoint := foodURL + "/student/" + userID + "/status"
 		foodReq, err := http.NewRequest(http.MethodPut, foodEndpoint, bytes.NewBuffer(payload))
@@ -79,7 +93,7 @@ func main() {
 		}
 		foodReq.Header.Set("Content-Type", "application/json")
 
-		resp, err := client.Do(foodReq)
+		resp, err := clientHTTP.Do(foodReq)
 		if err != nil {
 			log.Println("Error calling food service:", err)
 			http.Error(w, "Food service unreachable", http.StatusBadGateway)
@@ -99,8 +113,29 @@ func main() {
 		_, _ = io.Copy(w, resp.Body)
 	})
 
-	log.Printf("university--service started on port %s", port)
+	// =========================
+	// ✅ CATERING (POSTMAN → University → FoodService notification)
+	// =========================
+
+	// POST /university/catering
+	mux.HandleFunc("/university/catering", cateringHandler.Create)
+
+	// GET /university/catering/{id}
+	// PUT /university/catering/{id}/status
+	mux.HandleFunc("/university/catering/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			cateringHandler.GetByID(w, r)
+			return
+		}
+		if r.Method == http.MethodPut {
+			cateringHandler.UpdateStatus(w, r)
+			return
+		}
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	})
+
+	logger.Printf("university--service started on port %s", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }

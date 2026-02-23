@@ -97,7 +97,7 @@ services:
       - 8080:8080
     environment:
       - PORT=8080
-      - MONGO_DB_URI=mongodb://root:pass@user_data_base:27017
+      - MONGO_DB_URI=mongodb://admin:admin@user_data_base:27017/userDB?authSource=admin
       - SECRET_KEY=${SECRET_KEY}
     depends_on:
       user_data_base:

@@ -41,12 +41,24 @@ func main() {
 	if err := store.EnsureReviewIndexes(); err != nil {
 		logger.Println("Warning: cannot ensure review indexes:", err)
 	}
+	// ✅ CATERING: index for idempotency
+	if err := store.EnsureCateringIndexes(); err != nil {
+		logger.Println("Warning: cannot ensure catering indexes:", err)
+	}
 
 	foodServiceHandler := handlers.NewFoodServiceHandler(logger, store)
 
 	// Router + middleware
 	router := mux.NewRouter()
 	router.Use(MiddlewareContentTypeSet)
+	// ✅ GLOBAL OPTIONS (CORS preflight) – hvata sve rute
+	router.PathPrefix("/").Methods(http.MethodOptions).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
+		w.Header().Set("Vary", "Origin")
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.WriteHeader(http.StatusNoContent) // 204
+	})
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
 		uploadDir = "./uploads"
@@ -168,6 +180,18 @@ func main() {
 	getRecommendations := router.Methods(http.MethodGet).Subrouter()
 	getRecommendations.HandleFunc("/recommendations", foodServiceHandler.GetRecommendationsHandler)
 
+	// =========================
+	// ✅ CATERING NOTIFICATIONS
+	// =========================
+	cateringCreate := router.Methods(http.MethodPost).Subrouter()
+	cateringCreate.HandleFunc("/catering/notifications", foodServiceHandler.CreateCateringNotification)
+
+	cateringList := router.Methods(http.MethodGet).Subrouter()
+	cateringList.HandleFunc("/catering/notifications", foodServiceHandler.GetCateringNotifications)
+
+	cateringConfirm := router.Methods(http.MethodPost).Subrouter()
+	cateringConfirm.HandleFunc("/catering/notifications/{requestId}/confirm", foodServiceHandler.ConfirmCateringNotification)
+
 	// Server
 	server := http.Server{
 		Addr:         ":" + port,
@@ -197,9 +221,16 @@ func main() {
 	}
 	logger.Println("Server stopped")
 }
-
 func MiddlewareContentTypeSet(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, h *http.Request) {
+
+		// ✅ CORS za sve regularne requestove
+		rw.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
+		rw.Header().Set("Vary", "Origin")
+		rw.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+		rw.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// postojeći security headeri
 		rw.Header().Set("X-Content-Type-Options", "nosniff")
 		rw.Header().Set("X-Frame-Options", "DENY")
 		rw.Header().Set("Content-Security-Policy",

@@ -1177,3 +1177,132 @@ func (rr *FoodServiceRepo) GetRecommendationsForUser(userID primitive.ObjectID) 
 
 	return recs, nil
 }
+
+//ketering
+func (rr *FoodServiceRepo) cateringCol() *mongo.Collection {
+	return rr.getCollection("catering_notifications")
+}
+
+// Ensure unique index on requestId (idempotencija)
+func (rr *FoodServiceRepo) EnsureCateringIndexes() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	_, err := rr.cateringCol().Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "requestId", Value: 1}},
+		Options: options.Index().SetUnique(true).SetName("uniq_requestId"),
+	})
+	return err
+}
+
+func (rr *FoodServiceRepo) UpsertCateringNotification(n *CateringNotification) (*CateringNotification, error) {
+	if n == nil || n.RequestID == "" {
+		return nil, errors.New("requestId is required")
+	}
+
+	now := time.Now()
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	filter := bson.M{"requestId": n.RequestID}
+
+	// Ako već postoji, ne diramo createdAt, samo update-ujemo payload/updatedAt
+	update := bson.M{
+		"$set": bson.M{
+			"foods":            n.Foods,
+			"note":             n.Note,
+			"updatedAt":        now,
+			"universityStatus": n.UniversityStatus,
+			"state":            n.State,
+		},
+		"$setOnInsert": bson.M{
+			"createdAt": now,
+			"requestId": n.RequestID,
+		},
+	}
+
+	opts := options.Update().SetUpsert(true)
+	_, err := rr.cateringCol().UpdateOne(ctx, filter, update, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Vrati dokument nakon upsert-a
+	var out CateringNotification
+	if err := rr.cateringCol().FindOne(ctx, filter).Decode(&out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (rr *FoodServiceRepo) ListCateringNotifications() ([]CateringNotification, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	opts := options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}})
+	cur, err := rr.cateringCol().Find(ctx, bson.M{}, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	out := make([]CateringNotification, 0)
+	for cur.Next(ctx) {
+		var n CateringNotification
+		if err := cur.Decode(&n); err != nil {
+			return nil, err
+		}
+		out = append(out, n)
+	}
+	return out, cur.Err()
+}
+
+func (rr *FoodServiceRepo) MarkCateringSent(requestId string, status CateringStatus, message string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	now := time.Now()
+	_, err := rr.cateringCol().UpdateOne(ctx,
+		bson.M{"requestId": requestId},
+		bson.M{"$set": bson.M{
+			"state":            NOTIF_SENT,
+			"universityStatus": status,
+			"message":          message,
+			"updatedAt":        now,
+			"sentAt":           now,
+			"lastError":        "",
+		}},
+	)
+	return err
+}
+
+func (rr *FoodServiceRepo) MarkCateringError(requestId string, errMsg string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	now := time.Now()
+	_, err := rr.cateringCol().UpdateOne(ctx,
+		bson.M{"requestId": requestId},
+		bson.M{"$set": bson.M{
+			"state":     NOTIF_ERROR,
+			"lastError": errMsg,
+			"updatedAt": now,
+		}},
+	)
+	return err
+}
+
+func (rr *FoodServiceRepo) GetCateringByRequestID(requestId string) (*CateringNotification, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var n CateringNotification
+	err := rr.cateringCol().FindOne(ctx, bson.M{"requestId": requestId}).Decode(&n)
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &n, nil
+}

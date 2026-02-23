@@ -55,20 +55,22 @@
 
     main {
       width: 100%;
-      min-height: 100vh; /* Changed min-height to full viewport height */
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 1rem;
       box-sizing: inherit;
       position: relative;
-      flex-direction: column; /* Added to align items vertically */
+      flex-direction: column;
     }
 
     .button-container {
       margin-top: 1rem;
       display: flex;
       gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .button {
@@ -81,10 +83,157 @@
       font-weight: 500;
       text-transform: uppercase;
       transition: background-color 0.3s ease;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
     }
 
     .button:hover {
       background-color: var(--vivid-pink);
+    }
+
+    /* ===== Notifications UI ===== */
+    .notif-fab {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      color: white;
+      background: var(--red-to-pink-to-purple-horizontal-gradient);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: white;
+      color: black;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+    }
+
+    .notif-panel {
+      position: fixed;
+      top: 80px;
+      right: 18px;
+      width: min(440px, calc(100vw - 36px));
+      max-height: 75vh;
+      overflow: auto;
+      border-radius: 18px;
+      background: rgba(20, 20, 28, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+      padding: 14px;
+      z-index: 9999;
+    }
+
+    .notif-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .notif-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+    }
+
+    .notif-card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 16px;
+      padding: 12px;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .muted {
+      color: rgba(255,255,255,0.72);
+      font-size: 0.9rem;
+    }
+
+    .foods {
+      margin-top: 8px;
+      padding-left: 16px;
+      color: rgba(255,255,255,0.85);
+    }
+
+    .cta {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .btn-ima {
+      border: none;
+      cursor: pointer;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: white;
+      background: var(--red-to-pink-to-purple-horizontal-gradient);
+    }
+
+    .btn-ima[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-retry {
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      color: white;
+      cursor: pointer;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+    }
+
+    .status-ok {
+      color: #b8ffcc;
+      font-weight: 700;
+    }
+
+    .status-err {
+      color: #ffd1d1;
+      font-weight: 700;
     }
   </style>
 </head>
@@ -95,13 +244,76 @@
   <div class="button-container">
     <button class="button" (click)="view()">View therapy</button>
     <button class="button" (click)="viewMenu()">created menu</button>
-    
     <button class="button" (click)="createFood()">Create food</button>
     <button class="button" (click)="viewOrders()">Orders</button>
-    
     <button class="button" (click)="viewAcceptedOrders()">Accepted orders</button>
-    
   </div>
+
+  <!-- Floating notification button (kao telefon) -->
+  <button class="notif-fab" (click)="toggleNotifications()" aria-label="Notifications">
+    🔔
+    <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+  </button>
+
+  <!-- Notification panel -->
+  <div class="notif-panel" *ngIf="showNotifications">
+    <div class="notif-header">
+      <div class="notif-title">Ketering obaveštenja</div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="pill" (click)="refreshNotifications()" [disabled]="loadingNotifications">
+          {{ loadingNotifications ? 'Učitavam...' : 'Refresh' }}
+        </button>
+        <button class="pill" (click)="toggleNotifications()">Zatvori</button>
+      </div>
+    </div>
+
+    <div class="muted" *ngIf="notificationsError">
+      {{ notificationsError }}
+    </div>
+
+    <div class="muted" *ngIf="!loadingNotifications && notifications.length === 0">
+      Nema novih obaveštenja.
+    </div>
+
+    <div class="notif-card" *ngFor="let n of notifications; trackBy: trackByRequestId">
+      <div class="row">
+        <div>
+          <div style="font-weight:800;">Zahtev: {{ n.requestId }}</div>
+          <div class="muted">Status: {{ n.universityStatus }} · State: {{ n.state }}</div>
+          <div class="muted" *ngIf="n.note">Napomena: {{ n.note }}</div>
+        </div>
+
+        <div *ngIf="n.state === 'SENT'" class="status-ok">✅ Poslato je</div>
+        <div *ngIf="n.state === 'ERROR'" class="status-err">⚠️ Nije poslato</div>
+      </div>
+
+      <ul class="foods" *ngIf="n.foods?.length">
+        <li *ngFor="let f of n.foods">
+          {{ f.name }} ({{ f.type1 }}/{{ f.type2 }}) · {{ f.quantity }}
+        </li>
+      </ul>
+
+      <div class="cta">
+        <div class="muted" *ngIf="n.state === 'ERROR' && n.lastError">
+          {{ n.lastError }}
+        </div>
+
+        <button class="btn-retry"
+                *ngIf="n.state === 'ERROR'"
+                (click)="confirmIma(n.requestId)"
+                [disabled]="confirming[n.requestId]">
+          {{ confirming[n.requestId] ? 'Šaljem...' : 'Retry' }}
+        </button>
+
+        <button class="btn-ima"
+                (click)="confirmIma(n.requestId)"
+                [disabled]="n.state === 'SENT' || confirming[n.requestId]">
+          {{ confirming[n.requestId] ? 'Šaljem...' : 'IMA' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
 </main>
 </body>
 </html>

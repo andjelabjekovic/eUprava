@@ -11,8 +11,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
+	"time"
 	"github.com/gorilla/mux"
+	"bytes"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -818,5 +819,140 @@ func (h *FoodServiceHandler) MiddlewareFoodDeserialization(next http.Handler) ht
 
 		// Nastavi sa sledećim handlerom
 		next.ServeHTTP(rw, r)
+	})
+}
+
+//ketering
+type CreateCateringNotificationRequest struct {
+	RequestID string                 `json:"requestId"`
+	Foods     []data.CateringFoodItem `json:"foods"`
+	Note      string                 `json:"note,omitempty"`
+	Status    string                 `json:"status,omitempty"` // očekujemo "NEMA" default
+}
+
+func (h *FoodServiceHandler) CreateCateringNotification(rw http.ResponseWriter, r *http.Request) {
+	var req CreateCateringNotificationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(rw, "Invalid body", http.StatusBadRequest)
+		return
+	}
+	if req.RequestID == "" {
+		http.Error(rw, "requestId is required", http.StatusBadRequest)
+		return
+	}
+
+	// default
+	uStatus := data.CATERING_NEMA
+	if req.Status == string(data.CATERING_IMA) {
+		uStatus = data.CATERING_IMA
+	}
+
+	n := &data.CateringNotification{
+		RequestID:        req.RequestID,
+		Foods:            req.Foods,
+		Note:             req.Note,
+		UniversityStatus: uStatus,
+		State:            data.NOTIF_NEW,
+		UpdatedAt:        time.Now(),
+	}
+
+	saved, err := h.foodServiceRepo.UpsertCateringNotification(n)
+	if err != nil {
+		h.logger.Println("Upsert catering notification error:", err)
+		http.Error(rw, "Cannot save notification", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(rw).Encode(saved)
+}
+
+func (h *FoodServiceHandler) GetCateringNotifications(rw http.ResponseWriter, r *http.Request) {
+	list, err := h.foodServiceRepo.ListCateringNotifications()
+	if err != nil {
+		h.logger.Println("List catering notifications error:", err)
+		http.Error(rw, "Cannot fetch notifications", http.StatusInternalServerError)
+		return
+	}
+	rw.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(rw).Encode(list)
+}
+
+type UpdateCateringStatusRequest struct {
+	Status string `json:"status"` // "IMA"
+}
+
+func (h *FoodServiceHandler) ConfirmCateringNotification(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	requestId := vars["requestId"]
+	if requestId == "" {
+		http.Error(rw, "requestId is required", http.StatusBadRequest)
+		return
+	}
+
+	// (Optional) možeš da proveriš da li postoji
+	n, err := h.foodServiceRepo.GetCateringByRequestID(requestId)
+	if err != nil {
+		http.Error(rw, "Cannot read notification", http.StatusInternalServerError)
+		return
+	}
+	if n == nil {
+		http.Error(rw, "Notification not found", http.StatusNotFound)
+		return
+	}
+	// Edge-case: ako je već SENT, vrati OK i “već poslato”
+	if n.State == data.NOTIF_SENT {
+		rw.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(rw).Encode(map[string]any{
+			"message": "Already sent",
+			"requestId": requestId,
+			"state": n.State,
+		})
+		return
+	}
+
+	// poziv univerzitetu
+	universityURL := os.Getenv("UNIVERSITY_SERVICE_URL")
+	if universityURL == "" {
+		universityURL = "http://university--service:8006"
+	}
+
+	payload, _ := json.Marshal(UpdateCateringStatusRequest{Status: "IMA"})
+	endpoint := fmt.Sprintf("%s/university/catering/%s/status", universityURL, requestId)
+
+	req, err := http.NewRequest(http.MethodPut, endpoint, bytes.NewBuffer(payload))
+	if err != nil {
+		_ = h.foodServiceRepo.MarkCateringError(requestId, "cannot create request")
+		http.Error(rw, "Cannot create request", http.StatusInternalServerError)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		_ = h.foodServiceRepo.MarkCateringError(requestId, err.Error())
+		http.Error(rw, "University service unreachable", http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		msg := fmt.Sprintf("university returned %d: %s", resp.StatusCode, string(body))
+		_ = h.foodServiceRepo.MarkCateringError(requestId, msg)
+		http.Error(rw, "University returned error", http.StatusBadGateway)
+		return
+	}
+
+	// OK → mark sent
+	_ = h.foodServiceRepo.MarkCateringSent(requestId, data.CATERING_IMA, "Poslato je")
+
+	rw.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(rw).Encode(map[string]any{
+		"message":   "Poslato je",
+		"requestId": requestId,
+		"status":    "IMA",
 	})
 }
