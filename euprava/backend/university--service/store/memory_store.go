@@ -41,3 +41,13 @@ func (s *CateringStore) UpdateStatus(id string, status string) (*models.Catering
 	v.Status = status
 	return v, nil
 }
+func (s *CateringStore) List() []*models.CateringRequest {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	out := make([]*models.CateringRequest, 0, len(s.data))
+	for _, v := range s.data {
+		out = append(out, v)
+	}
+	return out
+}

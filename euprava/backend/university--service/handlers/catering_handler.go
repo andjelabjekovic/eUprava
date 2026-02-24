@@ -13,9 +13,9 @@ import (
 )
 
 type CateringHandler struct {
-	Logger    *log.Logger
-	Store     *store.CateringStore
-	Food      *client.FoodClient
+	Logger *log.Logger
+	Store  *store.CateringStore
+	Food   *client.FoodClient
 }
 
 func NewCateringHandler(l *log.Logger, s *store.CateringStore, fc *client.FoodClient) *CateringHandler {
@@ -90,6 +90,19 @@ func (h *CateringHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(cr)
+}
+
+// GET /university/catering
+func (h *CateringHandler) ListAll(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	list := h.Store.List()
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(list)
 }
 
 // PUT /university/catering/{id}/status

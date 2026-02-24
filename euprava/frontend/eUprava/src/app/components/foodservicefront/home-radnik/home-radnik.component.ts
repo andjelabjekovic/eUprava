@@ -64,7 +64,7 @@ export class HomeRadnikComponent implements OnInit, OnDestroy {
    * Ako ide direktno na food-service port, stavi npr: 'http://localhost:8003'
    * ili ako koristiš gateway: 'http://localhost:8000'
    */
-  private apiBase = 'http://localhost:8003';
+  private apiBase = 'http://localhost:8000/api/food';
 
   ngOnInit(): void {
     // Poll svake 4s (odmah + interval)

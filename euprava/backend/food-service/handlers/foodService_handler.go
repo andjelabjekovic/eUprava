@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,8 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
 	"github.com/gorilla/mux"
-	"bytes"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -87,7 +88,6 @@ func (h *FoodServiceHandler) CreateFoodHandler(rw http.ResponseWriter, r *http.R
 
 	// ✅ DEFAULT CENA
 	foodData.Price = 600
-
 
 	err = h.foodServiceRepo.CreateFoodEntry(r, foodData)
 	if err != nil {
@@ -285,7 +285,8 @@ func (h *FoodServiceHandler) GetAllOrdersHandler(rw http.ResponseWriter, r *http
 	rw.WriteHeader(http.StatusOK)
 	json.NewEncoder(rw).Encode(orders)
 }
-//komunikacija
+
+// komunikacija
 type UpdateStudentStatusRequest struct {
 	Status data.StudentStatus `json:"status"`
 }
@@ -464,35 +465,35 @@ func (r *FoodServiceHandler) EditFoodForStudent(rw http.ResponseWriter, h *http.
 
 // real
 func (h *FoodServiceHandler) GetAllFood(rw http.ResponseWriter, r *http.Request) {
-    foods, err := h.foodServiceRepo.GetAllFood()
-    if err != nil {
-        http.Error(rw, "Error retrieving food items", http.StatusInternalServerError)
-        return
-    }
+	foods, err := h.foodServiceRepo.GetAllFood()
+	if err != nil {
+		http.Error(rw, "Error retrieving food items", http.StatusInternalServerError)
+		return
+	}
 
-    // osiguraj default cenu ako je 0
-    for i := range *foods {
-        if (*foods)[i].Price == 0 {
-            (*foods)[i].Price = 600
-        }
-    }
+	// osiguraj default cenu ako je 0
+	for i := range *foods {
+		if (*foods)[i].Price == 0 {
+			(*foods)[i].Price = 600
+		}
+	}
 
-    userIDStr := r.URL.Query().Get("userId")
-    if userIDStr != "" {
-        userID, err := primitive.ObjectIDFromHex(userIDStr)
-        if err == nil {
-            status, err := h.foodServiceRepo.GetStudentStatus(userID)
-            // ✅ čak i ako err, NE RUŠIMO listu
-            if err == nil && status == data.BUDZET {
-                for i := range *foods {
-                    (*foods)[i].Price = 900
-                }
-            }
-        }
-    }
+	userIDStr := r.URL.Query().Get("userId")
+	if userIDStr != "" {
+		userID, err := primitive.ObjectIDFromHex(userIDStr)
+		if err == nil {
+			status, err := h.foodServiceRepo.GetStudentStatus(userID)
+			// ✅ čak i ako err, NE RUŠIMO listu
+			if err == nil && status == data.BUDZET {
+				for i := range *foods {
+					(*foods)[i].Price = 900
+				}
+			}
+		}
+	}
 
-    rw.Header().Set("Content-Type", "application/json")
-    _ = json.NewEncoder(rw).Encode(foods)
+	rw.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(rw).Encode(foods)
 }
 
 // getAllFood
@@ -822,12 +823,19 @@ func (h *FoodServiceHandler) MiddlewareFoodDeserialization(next http.Handler) ht
 	})
 }
 
-//ketering
-type CreateCateringNotificationRequest struct {
-	RequestID string                 `json:"requestId"`
+type UniversityCateringCreateRequest struct {
+	RequestID string                  `json:"requestId"`
 	Foods     []data.CateringFoodItem `json:"foods"`
-	Note      string                 `json:"note,omitempty"`
-	Status    string                 `json:"status,omitempty"` // očekujemo "NEMA" default
+	Note      string                  `json:"note,omitempty"`
+	Status    string                  `json:"status"` // "NEMA" ili "IMA"
+}
+
+// ketering
+type CreateCateringNotificationRequest struct {
+	RequestID string                  `json:"requestId"`
+	Foods     []data.CateringFoodItem `json:"foods"`
+	Note      string                  `json:"note,omitempty"`
+	Status    string                  `json:"status,omitempty"` // očekujemo "NEMA" default
 }
 
 func (h *FoodServiceHandler) CreateCateringNotification(rw http.ResponseWriter, r *http.Request) {
@@ -891,7 +899,6 @@ func (h *FoodServiceHandler) ConfirmCateringNotification(rw http.ResponseWriter,
 		return
 	}
 
-	// (Optional) možeš da proveriš da li postoji
 	n, err := h.foodServiceRepo.GetCateringByRequestID(requestId)
 	if err != nil {
 		http.Error(rw, "Cannot read notification", http.StatusInternalServerError)
@@ -901,43 +908,80 @@ func (h *FoodServiceHandler) ConfirmCateringNotification(rw http.ResponseWriter,
 		http.Error(rw, "Notification not found", http.StatusNotFound)
 		return
 	}
-	// Edge-case: ako je već SENT, vrati OK i “već poslato”
+
 	if n.State == data.NOTIF_SENT {
 		rw.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(rw).Encode(map[string]any{
-			"message": "Already sent",
+			"message":   "Already sent",
 			"requestId": requestId,
-			"state": n.State,
+			"state":     n.State,
 		})
 		return
 	}
 
-	// poziv univerzitetu
 	universityURL := os.Getenv("UNIVERSITY_SERVICE_URL")
 	if universityURL == "" {
 		universityURL = "http://university--service:8006"
 	}
 
-	payload, _ := json.Marshal(UpdateCateringStatusRequest{Status: "IMA"})
-	endpoint := fmt.Sprintf("%s/university/catering/%s/status", universityURL, requestId)
-
-	req, err := http.NewRequest(http.MethodPut, endpoint, bytes.NewBuffer(payload))
-	if err != nil {
-		_ = h.foodServiceRepo.MarkCateringError(requestId, "cannot create request")
-		http.Error(rw, "Cannot create request", http.StatusInternalServerError)
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+
+	// ---- 1️⃣ pokušaj update statusa ----
+	updatePayload, _ := json.Marshal(map[string]string{
+		"status": "IMA",
+	})
+
+	updateEndpoint := fmt.Sprintf("%s/university/catering/%s/status", universityURL, requestId)
+
+	updateReq, _ := http.NewRequest(http.MethodPut, updateEndpoint, bytes.NewBuffer(updatePayload))
+	updateReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(updateReq)
 	if err != nil {
 		_ = h.foodServiceRepo.MarkCateringError(requestId, err.Error())
-		http.Error(rw, "University service unreachable", http.StatusBadGateway)
+		http.Error(rw, "University unreachable", http.StatusBadGateway)
 		return
 	}
 	defer resp.Body.Close()
 
+	// ---- 2️⃣ Ako je 404 → prvo kreiraj kod university pa opet update ----
+	if resp.StatusCode == http.StatusNotFound {
+
+		createPayload, _ := json.Marshal(map[string]any{
+			"requestId": requestId,
+			"foods":     n.Foods,
+			"note":      n.Note,
+			"status":    "NEMA",
+		})
+
+		createEndpoint := fmt.Sprintf("%s/university/catering", universityURL)
+
+		createReq, _ := http.NewRequest(http.MethodPost, createEndpoint, bytes.NewBuffer(createPayload))
+		createReq.Header.Set("Content-Type", "application/json")
+
+		createResp, err := client.Do(createReq)
+		if err != nil || createResp.StatusCode < 200 || createResp.StatusCode >= 300 {
+			body, _ := io.ReadAll(createResp.Body)
+			msg := fmt.Sprintf("university create failed: %s", string(body))
+			_ = h.foodServiceRepo.MarkCateringError(requestId, msg)
+			http.Error(rw, "University create failed", http.StatusBadGateway)
+			return
+		}
+		createResp.Body.Close()
+
+		// ponovi update
+		resp2, err := client.Do(updateReq)
+		if err != nil || resp2.StatusCode < 200 || resp2.StatusCode >= 300 {
+			body, _ := io.ReadAll(resp2.Body)
+			msg := fmt.Sprintf("university update failed: %s", string(body))
+			_ = h.foodServiceRepo.MarkCateringError(requestId, msg)
+			http.Error(rw, "University update failed", http.StatusBadGateway)
+			return
+		}
+		resp2.Body.Close()
+	}
+
+	// ---- 3️⃣ Ako je neki drugi error ----
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
 		msg := fmt.Sprintf("university returned %d: %s", resp.StatusCode, string(body))
@@ -946,7 +990,7 @@ func (h *FoodServiceHandler) ConfirmCateringNotification(rw http.ResponseWriter,
 		return
 	}
 
-	// OK → mark sent
+	// ---- 4️⃣ OK ----
 	_ = h.foodServiceRepo.MarkCateringSent(requestId, data.CATERING_IMA, "Poslato je")
 
 	rw.Header().Set("Content-Type", "application/json")

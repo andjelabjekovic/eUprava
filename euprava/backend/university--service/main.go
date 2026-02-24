@@ -118,7 +118,18 @@ func main() {
 	// =========================
 
 	// POST /university/catering
-	mux.HandleFunc("/university/catering", cateringHandler.Create)
+	//mux.HandleFunc("/university/catering", cateringHandler.Create)
+	mux.HandleFunc("/university/catering", func(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		cateringHandler.Create(w, r)
+		return
+	}
+	if r.Method == http.MethodGet {
+		cateringHandler.ListAll(w, r)
+		return
+	}
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+})
 
 	// GET /university/catering/{id}
 	// PUT /university/catering/{id}/status
