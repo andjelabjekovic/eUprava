@@ -51,14 +51,14 @@ func main() {
 	// Router + middleware
 	router := mux.NewRouter()
 	router.Use(MiddlewareContentTypeSet)
-	// ✅ GLOBAL OPTIONS (CORS preflight) – hvata sve rute
-	router.PathPrefix("/").Methods(http.MethodOptions).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
-		w.Header().Set("Vary", "Origin")
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.WriteHeader(http.StatusNoContent) // 204
-	})
+	/*	// ✅ GLOBAL OPTIONS (CORS preflight) – hvata sve rute
+		router.PathPrefix("/").Methods(http.MethodOptions).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
+			w.Header().Set("Vary", "Origin")
+			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusNoContent) // 204
+		})*/
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
 		uploadDir = "./uploads"
@@ -223,13 +223,13 @@ func main() {
 }
 func MiddlewareContentTypeSet(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, h *http.Request) {
-
-		// ✅ CORS za sve regularne requestove
-		rw.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
-		rw.Header().Set("Vary", "Origin")
-		rw.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-		rw.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
+		/*
+			// ✅ CORS za sve regularne requestove
+			rw.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
+			rw.Header().Set("Vary", "Origin")
+			rw.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+			rw.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		*/
 		// postojeći security headeri
 		rw.Header().Set("X-Content-Type-Options", "nosniff")
 		rw.Header().Set("X-Frame-Options", "DENY")
